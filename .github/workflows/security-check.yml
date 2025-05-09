@@ -45,4 +45,4 @@ jobs:
         run: node scripts/check-secrets.js
 
       - name: Run linter
-        run: pnpm lint
+        run: pnpm lint --no-interactive
