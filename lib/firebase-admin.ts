@@ -889,35 +889,44 @@ export async function saveRepositories(username: string, repos: any[]): Promise<
   }
 }
 
-// Mock Firebase API key for development if needed
-const MOCK_API_KEY = 'mock-firebase-api-key-for-development-only';
-
-// Initialize the Firebase app for client-side
+// Initialize Firebase API configuration for client-side
 export function getFirebaseClientConfig() {
   try {
-    // Generate a config object for the Firebase client SDK
-    return {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || MOCK_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'github-profile-analyzer.firebaseapp.com',
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'github-profile-analyzer',
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'github-profile-analyzer.appspot.com',
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '000000000000',
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:000000000000:web:0000000000000000000000',
-      measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || 'G-0000000000',
+    // Generate a config object for the Firebase client SDK using only environment variables
+    const config = {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+      measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
     };
+    
+    // Validate that required fields are present
+    const requiredFields = ['apiKey', 'authDomain', 'projectId'];
+    const missingFields = requiredFields.filter(field => !config[field]);
+    
+    if (missingFields.length > 0) {
+      console.error(`Missing required Firebase configuration: ${missingFields.join(', ')}`);
+      throw new Error('Incomplete Firebase configuration');
+    }
+    
+    return config;
   } catch (error) {
     console.error('Error generating Firebase client config:', error);
     
-    // Provide a fallback configuration for development
+    // In development, return a placeholder that will trigger validation errors
+    // rather than exposing hardcoded values
     if (isDevelopment) {
       return {
-        apiKey: MOCK_API_KEY,
-        authDomain: 'github-profile-analyzer.firebaseapp.com',
-        projectId: 'github-profile-analyzer',
-        storageBucket: 'github-profile-analyzer.appspot.com',
-        messagingSenderId: '000000000000',
-        appId: '1:000000000000:web:0000000000000000000000',
-        measurementId: 'G-0000000000',
+        apiKey: undefined,
+        authDomain: undefined,
+        projectId: undefined,
+        storageBucket: undefined,
+        messagingSenderId: undefined,
+        appId: undefined,
+        measurementId: undefined,
       };
     }
     

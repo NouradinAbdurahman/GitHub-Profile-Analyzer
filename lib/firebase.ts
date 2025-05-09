@@ -21,32 +21,31 @@ import {
 import { getAuth, onAuthStateChanged, Auth, signInAnonymously } from "firebase/auth";
 import { getAnalytics, logEvent, isSupported, Analytics } from "firebase/analytics";
 
-// Get Firebase configuration with fallback for development
-const firebaseConfig = (() => {
-  try {
-    return {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyA1234567890abcdefghijklmnopqrstuv",
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "github-profile-analyzer-dev.firebaseapp.com",
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "github-profile-analyzer-dev",
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "github-profile-analyzer-dev.appspot.com",
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "123456789012",
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:123456789012:web:abcdef1234567890",
-      measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-ABC1234567"
-    };
-  } catch (error) {
-    console.warn('Error getting Firebase config, using fallback:', error);
-    // Fallback configuration for development
-    return {
-      apiKey: "AIzaSyA1234567890abcdefghijklmnopqrstuv",
-      authDomain: "github-profile-analyzer-dev.firebaseapp.com",
-      projectId: "github-profile-analyzer-dev",
-      storageBucket: "github-profile-analyzer-dev.appspot.com",
-      messagingSenderId: "123456789012",
-      appId: "1:123456789012:web:abcdef1234567890",
-      measurementId: "G-ABC1234567"
-    };
+// Get Firebase configuration from environment variables only, no hardcoded values
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+};
+
+// Validate Firebase configuration has required fields
+const validateFirebaseConfig = () => {
+  const requiredFields = ['apiKey', 'authDomain', 'projectId'];
+  const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
+  
+  if (missingFields.length > 0) {
+    console.error(`Missing required Firebase configuration: ${missingFields.join(', ')}`);
+    if (typeof window !== 'undefined') {
+      console.warn('Please make sure you have set up your environment variables correctly.');
+    }
+    return false;
   }
-})();
+  return true;
+};
 
 // Use `any` for broader compatibility at module scope, rely on runtime checks in functions.
 let app: any;
@@ -58,8 +57,8 @@ let firebaseAuthUser: any = null; // Variable to hold Firebase Auth user state
 // Check if we're in a browser environment
 const isBrowser = typeof window !== 'undefined';
 
-// Initialize Firebase only in browser
-if (isBrowser) {
+// Initialize Firebase only in browser and only if config is valid
+if (isBrowser && validateFirebaseConfig()) {
   try {
     const existingApp = getApps().find(app => app.name === '[DEFAULT]');
     app = existingApp || initializeApp(firebaseConfig);
@@ -120,7 +119,11 @@ if (isBrowser) {
     console.error('Error initializing Firebase client:', error);
   }
 } else {
-  console.log('Firebase client SDK not initialized (server environment)');
+  if (isBrowser) {
+    console.error('Firebase client SDK not initialized due to invalid configuration');
+  } else {
+    console.log('Firebase client SDK not initialized (server environment)');
+  }
 }
 
 // Export Firebase services
