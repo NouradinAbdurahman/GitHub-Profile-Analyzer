@@ -19,11 +19,11 @@ export default function FeatureCard({ title, description }: { title: string; des
 
   return (
     <Card
-      className="group relative overflow-hidden p-0 rounded-2xl shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:border-[#58a6ff] max-[530px]:w-5/6 max-[530px]:mx-auto"
+      className="group relative overflow-hidden p-0 rounded-2xl shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:border-[#58a6ff"
       onMouseEnter={() => setIsHovered(true)} // Set isHovered to true on mouse enter
       onMouseLeave={() => setIsHovered(false)} // Set isHovered to false on mouse leave
     >
-      <CardHeader className="relative z-10 flex flex-col items-center justify-center pb-2 pt-6 max-[530px]:pb-1 max-[530px]:pt-3 max-[530px]:px-2">
+      <CardHeader className="relative z-10 flex flex-col items-center justify-center p-6 max-[530px]:p-4"> {/* Adjusted padding */}
         <div className="mb-4 flex items-center justify-center max-[530px]:mb-2">
           <span className="inline-flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/30 to-indigo-400/10 p-4 shadow-lg max-[530px]:p-2">
             <AnimatedIcon Icon={icon} colorClass={color + ' drop-shadow-[0_0_16px_rgba(99,102,241,0.7)]'} rotate={rotate} small={true} isHovered={isHovered} /> {/* Pass isHovered to AnimatedIcon */}
@@ -33,7 +33,7 @@ export default function FeatureCard({ title, description }: { title: string; des
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="relative z-10 px-6 pb-6 pt-2 max-[530px]:px-2 max-[530px]:pb-2 max-[530px]:pt-1">
+      <CardContent className="relative z-10 px-6 pb-6 pt-2 max-[530px]:px-2 max-[530px]:pb-6 max-[530px]:pt-1">
         <CardDescription className="text-center text-xl text-muted-foreground font-medium max-[530px]:text-base max-[530px]:font-normal">
           {description}
         </CardDescription>

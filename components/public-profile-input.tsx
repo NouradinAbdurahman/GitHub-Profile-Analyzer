@@ -99,22 +99,22 @@ export function PublicProfileInput() {
               setUsername(e.target.value);
               setError(null);
             }}
-            className={`pl-10 text-[10px] sm:text-base h-8 sm:h-10 px-2 sm:px-4 transition-all duration-300 ${error ? "focus-within:ring-red-500 border-red-400" : ""}`}
+            className={`pl-10 text-[10px] sm:text-base h-8 sm:h-10 px-2 sm:px-4 transition-all duration-300 ${error ? "focus-within:ring-red-500 border-red-400" : ""} max-[530px]:text-sm`} // Increased text size for <530px
           />
         </div>
         <Button 
           type="submit" 
           disabled={isLoading}
-          className="bg-gray-900 hover:bg-gray-800 text-white transition-all duration-200 text-[10px] sm:text-xs h-8 sm:h-10 px-2 sm:px-4"
+          className="bg-gray-900 hover:bg-gray-800 text-white transition-all duration-200 text-[10px] sm:text-xs h-8 sm:h-10 px-2 sm:px-4 max-[530px]:px-2 max-[530px]:py-1" // Reduced padding for <530px
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+              <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin max-[530px]:h-3 max-[530px]:w-3 max-[530px]:mr-1" /> {/* Adjusted icon size and margin for <530px */}
               Loading...
             </>
           ) : (
             <>
-              <Search className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <Search className="mr-2 h-3 w-3 sm:h-4 sm:w-4 max-[530px]:h-3 max-[530px]:w-3 max-[530px]:mr-1" /> {/* Adjusted icon size and margin for <530px */}
               Analyze
             </>
           )}
