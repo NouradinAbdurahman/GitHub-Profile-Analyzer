@@ -1,0 +1,32 @@
+{
+  "name": "github-profile-analyzer",
+  "version": "1.0.0",
+  "description": "A web application that analyzes GitHub profiles using AI insights.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "mongodb": "^5.0.0",
+    "axios": "^0.21.1"
+  },
+  "devDependencies": {
+    "typescript": "^4.0.0",
+    "eslint": "^7.0.0",
+    "eslint-config-next": "latest"
+  },
+  "keywords": [
+    "github",
+    "profile",
+    "analyzer",
+    "ai"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
