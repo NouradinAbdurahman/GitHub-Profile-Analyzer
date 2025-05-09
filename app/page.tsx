@@ -7,9 +7,9 @@ export default function Home() {
   return (
     <div className="container mx-auto px-4 py-12">
       <section className="mb-12 text-center">
-        <h1 className="mb-4 text-2xl sm:text-4xl font-extrabold tracking-tight lg:text-5xl">GitHub Profile Analyzer</h1>
-        <p className="mx-auto mb-8 max-w-2xl text-xs sm:text-lg text-muted-foreground">
-          Visualize GitHub profiles, analyze repository statistics, and track language usage over time.
+        <h1 className="mb-4 text-2xl sm:text-4xl font-extrabold tracking-tight lg:text-5xl max-[530px]:text-3xl">GitHub Profile Analyzer</h1>
+        <p className="mx-auto mb-8 max-w-2xl text-xs sm:text-lg text-muted-foreground max-[530px]:text-sm">
+          Explore AI-driven GitHub profile analysis, compare users with visual metrics, and gain real-time insights with personalized recommendations.
         </p>
         <PublicProfileInput />
       </section>

@@ -476,4 +476,4 @@ Based on your profile stats and activity patterns:
 // .bg-card { background-color: hsl(var(--card)); }
 // .text-muted-foreground { color: hsl(var(--muted-foreground)); }
 // .bg-muted { background-color: hsl(var(--muted)); }
-// etc. (shadcn/ui handles most of this if set up correctly) 
+// etc. (shadcn/ui handles most of this if set up correctly)
