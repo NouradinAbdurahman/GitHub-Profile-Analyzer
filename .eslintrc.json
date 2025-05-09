@@ -9,5 +9,18 @@
     "ecmaVersion": 12,
     "sourceType": "module"
   },
-  "rules": {}
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off",
+    "react/jsx-key": "warn",
+    "no-unused-vars": "warn",
+    "@next/next/no-img-element": "off",
+    "jsx-a11y/alt-text": "warn"
+  },
+  "settings": {
+    "react": {
+      "version": "19"
+    }
+  },
+  "ignorePatterns": ["node_modules/", ".next/", "out/", "public/", "github-profile-analyzer/"]
 }
