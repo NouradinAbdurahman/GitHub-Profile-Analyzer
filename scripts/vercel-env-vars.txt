@@ -1,0 +1,35 @@
+# Environment Variables for Vercel Deployment
+# Copy these variables to your Vercel project settings
+
+# Firebase Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyA9hMTtmdCFs1PiR_0OXSLB_M-D6A2ybzo
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=github-profile-analyzer-363f4.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=github-profile-analyzer-363f4
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=github-profile-analyzer-363f4.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=764028069901
+NEXT_PUBLIC_FIREBASE_APP_ID=1:764028069901:web:a4201966f825e54fb90d44
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-5XPR84R0LV
+
+# GitHub OAuth secrets
+GITHUB_CLIENT_ID=Ov23liC8upDQ6MPMCcDM
+GITHUB_CLIENT_SECRET=e67075f8cd127783d5948d50f44315109a8e546e
+
+# Add your deployed app URL (replace with your Vercel URL)
+APP_URL=https://YOUR-VERCEL-APP-URL.vercel.app
+NEXTAUTH_URL=https://YOUR-VERCEL-APP-URL.vercel.app
+GITHUB_REDIRECT_URI=https://YOUR-VERCEL-APP-URL.vercel.app/api/auth/callback/github
+
+# Session Secret (generate a secure random string of at least 32 characters)
+SESSION_SECRET=GENERATE_A_SECURE_RANDOM_STRING_OF_32_CHARS_OR_MORE
+
+# Optional: GitHub Personal Access Token for higher rate limits
+# Only needed if you want to increase the GitHub API rate limit
+# GITHUB_PERSONAL_ACCESS_TOKEN=your_personal_access_token_here
+
+# Firebase Admin Service Account Key
+# The contents of your config/firebase-service-account.json file
+# This should be added as a single line JSON string (use a JSON minifier)
+FIREBASE_SERVICE_ACCOUNT_KEY="your_minified_firebase_service_account_key_json_here"
+
+# Dakaei API Key for AI features
+DAKAEI_API_KEY=your_dakaei_api_key_here

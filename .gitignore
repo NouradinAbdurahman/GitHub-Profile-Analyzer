@@ -35,3 +35,6 @@ next-env.d.ts
 
 # Firebase service account (sensitive)
 /config/firebase-service-account.json
+
+# Vercel environment variable template
+scripts/vercel-env-vars.txt

@@ -2,7 +2,7 @@
 
 A modern, AI-powered GitHub profile analytics platform that provides comprehensive insights, visualizations, and personalized recommendations to enhance your GitHub presence.
 
-![GitHub Profile Analyzer](/public/placeholder-logo.png)
+<!-- ![GitHub Profile Analyzer](/public/placeholder-logo.png) -->
 
 ## 🌟 Features
 
@@ -46,9 +46,6 @@ A modern, AI-powered GitHub profile analytics platform that provides comprehensi
   - Accessibility-focused design
   - Real-time data updates
 
-## 📊 Screenshots
-
-*Coming soon*
 
 ## 🚀 Technologies
 
