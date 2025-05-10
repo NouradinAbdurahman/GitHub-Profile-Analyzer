@@ -3,9 +3,10 @@ import React from 'react';
 type RecommendationsProps = {
   username: string;
   languages: string[];
+  isResponding?: boolean;
 };
 
-const Recommendations: React.FC<RecommendationsProps> = ({ username, languages }) => {
+const Recommendations: React.FC<RecommendationsProps> = ({ username, languages, isResponding }) => {
   // Placeholder for recommendations logic
   const recommendedRepos = [
     // Example data structure for recommended repositories
@@ -15,7 +16,7 @@ const Recommendations: React.FC<RecommendationsProps> = ({ username, languages }
   ];
 
   return (
-    <div>
+    <div className={`transition-all duration-300 ${isResponding ? "w-[600px] h-[400px]" : "w-[400px] h-auto"}`}>
       <h4 className="text-xl font-semibold">Recommended Repositories for {username}</h4>
       <ul className="mt-4 space-y-2">
         {recommendedRepos.map((repo) => (

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { SimpleLoadingSpinner } from "@/components/loading-spinner"; // Assuming this exists
 import { Bookmark, CheckCircle2, XCircle, Sparkles, Play, Pause } from "lucide-react"; // Added Play and Pause
 import { saveAnalysisResult } from "@/lib/firebase"; // Import the save function
+import { stripMarkdownSymbols } from "@/lib/text-normalizer"; // Import the stripMarkdownSymbols function
 import {
   Tooltip,
   TooltipContent,
@@ -48,6 +49,16 @@ const fadeInAnimation = `
   }
   .fade-in {
     animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+  
+  .ai-response {
+    font-family: 'Open Sans', sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-variation-settings: "wdth" 100;
   }
 `;
 
@@ -275,7 +286,9 @@ Based on your profile stats and activity patterns:
                 
                 // Once we have a substantial AI response, switch to AI phase
                 if (accumulatedResponse.length > 50) {
-                  setResults(prev => ({ ...prev, [type]: accumulatedResponse }));
+                  // Strip markdown symbols from the response
+                  const cleanResponse = stripMarkdownSymbols(accumulatedResponse);
+                  setResults(prev => ({ ...prev, [type]: cleanResponse }));
                 }
               }
               
@@ -292,9 +305,10 @@ Based on your profile stats and activity patterns:
         await waitWhilePaused(type, paused);
       }
       
-      // Ensure final content is set
+      // Ensure final content is set with stripped markdown
       if (accumulatedResponse.length > 0) {
-        setResults(prev => ({ ...prev, [type]: accumulatedResponse }));
+        const cleanResponse = stripMarkdownSymbols(accumulatedResponse);
+        setResults(prev => ({ ...prev, [type]: cleanResponse }));
       }
       
     } catch (err: any) {
@@ -374,15 +388,15 @@ Based on your profile stats and activity patterns:
                   <div className="flex justify-between items-center">
                     <CardTitle className="text-[12px] sm:text-lg font-semibold">{tool.label} Generator</CardTitle>
                     {apiKeyStatus === 'checking' ? (
-                       <span className="text-[10px] sm:text-xs text-muted-foreground">Checking config...</span>
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">Checking config...</span>
                     ) : isConfigured ? (
-                       <span className="text-[10px] sm:text-xs text-green-500 flex items-center gap-1">
-                         <CheckCircle2 className="w-4 h-4" /> API key configured
-                       </span>
+                      <span className="text-[10px] sm:text-xs text-green-500 flex items-center gap-1">
+                        <CheckCircle2 className="w-4 h-4" /> API key configured
+                      </span>
                     ) : (
-                       <span className="text-[10px] sm:text-xs text-red-500 flex items-center gap-1">
-                         <XCircle className="w-4 h-4" /> API key needed
-                       </span>
+                      <span className="text-[10px] sm:text-xs text-red-500 flex items-center gap-1">
+                        <XCircle className="w-4 h-4" /> API key needed
+                      </span>
                     )}
                   </div>
                   <CardDescription className="text-[10px] sm:text-xs text-muted-foreground">{tool.description}</CardDescription>
@@ -408,10 +422,10 @@ Based on your profile stats and activity patterns:
                       <div className={isStreaming === tool.type ? 'opacity-50' : 'fade-in'}>
                         {isStreaming === tool.type ? (
                           // AI phase with typewriter effect
-                          <pre className="whitespace-pre-wrap text-xs">{results[tool.type]}</pre>
+                          <pre className="whitespace-pre-wrap text-xs ai-response" dangerouslySetInnerHTML={{ __html: results[tool.type] }}></pre>
                         ) : (
                           // Preliminary phase or final result
-                          <pre className="whitespace-pre-wrap text-xs">{results[tool.type]}</pre>
+                          <pre className="whitespace-pre-wrap text-xs ai-response" dangerouslySetInnerHTML={{ __html: results[tool.type] }}></pre>
                         )}
                       </div>
                     </div>

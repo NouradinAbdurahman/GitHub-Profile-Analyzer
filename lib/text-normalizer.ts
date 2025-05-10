@@ -340,3 +340,38 @@ function restoreMarkdownElements(text: string, elements: Record<string, string>)
 
   return result;
 }
+
+/**
+ * Strips markdown symbols (bold, italic, code, strikethrough) from text for a cleaner look
+ * @param text The text to clean
+ * @returns Text without markdown symbols
+ */
+export function stripMarkdownSymbols(text: string): string {
+  if (!text) return '';
+  
+  // Format section headings with numbers (like 1., 2., ###) to be bold and add spacing
+  let formattedText = text
+    // Format numbered points (1., 2., etc.) but keep the numbers
+    .replace(/^(\d+\.)\s*(.*?)$/gm, '<b>$1 $2</b>')
+    // Format markdown headings (###, ##, #) to be bold with spacing
+    .replace(/^#+\s+(.*?)$/gm, '<b>$1</b>')
+    // Add spacing between sections (after bold headings)
+    .replace(/<\/b>\n/g, '</b>\n\n')
+    // Preserve list items but remove dash/asterisk markers
+    .replace(/^[-*]\s+(.*?)$/gm, '• $1')
+    
+    // Strip other markdown symbols
+    .replace(/\*\*(.*?)\*\*/g, '$1') // bold
+    .replace(/\*(.*?)\*/g, '$1') // italic
+    .replace(/__(.*?)__/g, '$1') // underline
+    .replace(/_(.*?)_/g, '$1') // underline/italic
+    .replace(/~~(.*?)~~/g, '$1') // strikethrough
+    .replace(/`([^`]+)`/g, '$1') // inline code
+    .replace(/\[(.*?)\]\((.*?)\)/g, '$1') // markdown links
+    
+    // Clean up excessive newlines
+    .replace(/\n{3,}/g, '\n\n') // collapse multiple newlines to max 2
+    .trim();
+  
+  return formattedText;
+}
