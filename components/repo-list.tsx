@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { RepoFilter, type RepoFilters } from "./repo-filter"
 import { ComparisonButton } from "./comparison-button"
 import { useAuth } from "@/components/auth-provider"
+import { AuthReconnect } from "@/components/auth-reconnect"
 
 // Define repository type
 type Repository = {
@@ -66,6 +67,7 @@ export function RepoList({ type = "all" }: { type?: "all" | "public" | "private"
       }
 
       // Check if the token has the necessary scopes
+      let hasScopeForPrivateRepos = false;
       try {
         const scopeCheckResponse = await fetch('https://api.github.com/user', {
           headers: {
@@ -78,9 +80,15 @@ export function RepoList({ type = "all" }: { type?: "all" | "public" | "private"
         // Check the scopes in the response headers
         const scopes = scopeCheckResponse.headers.get('x-oauth-scopes') || '';
         console.log("Available GitHub scopes:", scopes);
-
-        if (!scopes.includes('repo')) {
-          console.warn("Missing 'repo' scope in GitHub token");
+        
+        hasScopeForPrivateRepos = scopes.includes('repo');
+        if (!hasScopeForPrivateRepos) {
+          console.warn("Missing 'repo' scope in GitHub token - private repositories will not be available");
+          if (type === "private") {
+            setError("Your GitHub token doesn't have permission to access private repositories. Please reconnect with the 'repo' scope.");
+            setLoading(false);
+            return;
+          }
         }
       } catch (err) {
         console.error("Error checking token scopes:", err);
@@ -93,7 +101,7 @@ export function RepoList({ type = "all" }: { type?: "all" | "public" | "private"
         console.log(`Fetching ${type} repositories for user:`, user.login)
 
         // Use direct GitHub API endpoints with additional parameters
-        let githubEndpoint = `https://api.github.com/user/repos?per_page=100&sort=updated&direction=desc&visibility=all`
+        let githubEndpoint = `https://api.github.com/user/repos?per_page=100&sort=updated&direction=desc&visibility=all&affiliation=owner,collaborator,organization_member`
 
         // Use the appropriate endpoint based on the type
         if (type === "starred") {
@@ -168,6 +176,10 @@ export function RepoList({ type = "all" }: { type?: "all" | "public" | "private"
         setError(err instanceof Error ? err.message : "Failed to fetch repositories")
       } finally {
         setLoading(false)
+        // Add logging to help with debugging
+        if (type === "private") {
+          console.log("Private repos count:", repositories.filter(repo => repo.private).length);
+        }
       }
     }
 
@@ -322,6 +334,72 @@ export function RepoList({ type = "all" }: { type?: "all" | "public" | "private"
     return filteredRepos.length > visibleCount
   }
 
+  // Error state
+  if (error) {
+    const isRepoScopeError = error.includes("doesn't have permission to access private repositories");
+
+    return (
+      <Card>
+        <CardContent className="p-6">
+          {isRepoScopeError ? (
+            <AuthReconnect message={error} />
+          ) : (
+            <p className="text-center text-muted-foreground">Error: {error}</p>
+          )}
+          <div className="mt-4 flex justify-center">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (user?.login) {
+                  setLoading(true);
+                  setError(null);
+                  // Call the fetchRepositories function from the useEffect
+                  const fetchRepos = async () => {
+                    if (!user || !user.login) return;
+
+                    try {
+                      // Use direct GitHub API endpoints with additional parameters
+                      let githubEndpoint = `https://api.github.com/user/repos?per_page=100&sort=updated&direction=desc&visibility=all&affiliation=owner,collaborator,organization_member`
+
+                      if (type === "starred") {
+                        githubEndpoint = `https://api.github.com/user/starred?per_page=100&sort=updated&direction=desc`
+                      }
+
+                      const response = await fetch(githubEndpoint, {
+                        headers: {
+                          'Authorization': `token ${user.access_token}`,
+                          'Accept': 'application/vnd.github.v3+json',
+                          'User-Agent': 'GitHub-Profile-Analyzer'
+                        }
+                      });
+
+                      if (response.ok) {
+                        const data = await response.json();
+                        if (Array.isArray(data)) {
+                          setRepositories(data);
+                        }
+                      }
+                    } catch (err) {
+                      console.error("Error fetching repositories:", err);
+                      setError("Failed to fetch repositories");
+                    } finally {
+                      setLoading(false);
+                    }
+                  };
+
+                  fetchRepos();
+                }
+              }}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row">
@@ -341,61 +419,6 @@ export function RepoList({ type = "all" }: { type?: "all" | "public" | "private"
         <Card>
           <CardContent className="flex items-center justify-center p-12">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          </CardContent>
-        </Card>
-      ) : error ? (
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-center text-muted-foreground">Error: {error}</p>
-            <div className="mt-4 flex justify-center">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  if (user?.login) {
-                    setLoading(true);
-                    setError(null);
-                    // Call the fetchRepositories function from the useEffect
-                    const fetchRepos = async () => {
-                      if (!user || !user.login) return;
-
-                      try {
-                        // Use direct GitHub API endpoints with additional parameters
-                        let githubEndpoint = `https://api.github.com/user/repos?per_page=100&sort=updated&direction=desc&visibility=all`
-
-                        if (type === "starred") {
-                          githubEndpoint = `https://api.github.com/user/starred?per_page=100&sort=updated&direction=desc`
-                        }
-
-                        const response = await fetch(githubEndpoint, {
-                          headers: {
-                            'Authorization': `token ${user.access_token}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'User-Agent': 'GitHub-Profile-Analyzer'
-                          }
-                        });
-
-                        if (response.ok) {
-                          const data = await response.json();
-                          if (Array.isArray(data)) {
-                            setRepositories(data);
-                          }
-                        }
-                      } catch (err) {
-                        console.error("Error fetching repositories:", err);
-                        setError("Failed to fetch repositories");
-                      } finally {
-                        setLoading(false);
-                      }
-                    };
-
-                    fetchRepos();
-                  }
-                }}
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Retry
-              </Button>
-            </div>
           </CardContent>
         </Card>
       ) : repositories.length === 0 ? (
@@ -420,7 +443,7 @@ export function RepoList({ type = "all" }: { type?: "all" | "public" | "private"
 
                       try {
                         // Use direct GitHub API endpoints with additional parameters
-                        let githubEndpoint = `https://api.github.com/user/repos?per_page=100&sort=updated&direction=desc&visibility=all`
+                        let githubEndpoint = `https://api.github.com/user/repos?per_page=100&sort=updated&direction=desc&visibility=all&affiliation=owner,collaborator,organization_member`
 
                         if (type === "starred") {
                           githubEndpoint = `https://api.github.com/user/starred?per_page=100&sort=updated&direction=desc`

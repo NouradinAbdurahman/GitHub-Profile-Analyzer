@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   githubAuthUrl.searchParams.append("client_id", GITHUB_CLIENT_ID)
   githubAuthUrl.searchParams.append("redirect_uri", GITHUB_REDIRECT_URI)
   // Request necessary scopes (adjust if needed)
-  githubAuthUrl.searchParams.append("scope", "read:user user:email")
+  githubAuthUrl.searchParams.append("scope", "read:user user:email repo")
   githubAuthUrl.searchParams.append("state", state)
 
   // --- Set Nonce Cookie and Redirect ---
