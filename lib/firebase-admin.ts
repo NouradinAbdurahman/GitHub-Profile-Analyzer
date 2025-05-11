@@ -905,7 +905,7 @@ export function getFirebaseClientConfig() {
     
     // Validate that required fields are present
     const requiredFields = ['apiKey', 'authDomain', 'projectId'];
-    const missingFields = requiredFields.filter(field => !config[field]);
+    const missingFields = requiredFields.filter(field => !config[field as keyof typeof config]);
     
     if (missingFields.length > 0) {
       console.error(`Missing required Firebase configuration: ${missingFields.join(', ')}`);
