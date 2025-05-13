@@ -213,7 +213,7 @@ Based on your profile stats and activity patterns:
   // --- Updated handleRunTool for Seamless Transitions ---
   const handleRunTool = async (type: string) => {
     if (apiKeyStatus !== 'configured') {
-      setToast("AI Tools API Key not configured correctly.");
+      setToast("Service temporarily unavailable. Please try again later.");
       return;
     }
     
@@ -387,17 +387,7 @@ Based on your profile stats and activity patterns:
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <CardTitle className="text-[12px] sm:text-lg font-semibold">{tool.label} Generator</CardTitle>
-                    {apiKeyStatus === 'checking' ? (
-                      <span className="text-[10px] sm:text-xs text-muted-foreground">Checking config...</span>
-                    ) : isConfigured ? (
-                      <span className="text-[10px] sm:text-xs text-green-500 flex items-center gap-1">
-                        <CheckCircle2 className="w-4 h-4" /> API key configured
-                      </span>
-                    ) : (
-                      <span className="text-[10px] sm:text-xs text-red-500 flex items-center gap-1">
-                        <XCircle className="w-4 h-4" /> API key needed
-                      </span>
-                    )}
+                    {/* API key status is hidden from the UI */}
                   </div>
                   <CardDescription className="text-[10px] sm:text-xs text-muted-foreground">{tool.description}</CardDescription>
                 </CardHeader>

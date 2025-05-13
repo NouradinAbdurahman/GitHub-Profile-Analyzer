@@ -162,7 +162,7 @@ Please provide a structured guide with 5 specific sections to improve my GitHub 
       console.error("Error in ProfileOptimizer:", e);
       if (e instanceof Error) {
         if (e.message.includes("API key not configured")) {
-          setError("API key not configured. Please check your environment variables.");
+          setError("Service temporarily unavailable. Please try again later.");
         } else if (e.message.includes("404")) {
           setError("Unable to access GitHub data. Please verify your account connection.");
         } else if (e.message.includes("busy") || e.message.includes("timeout") || e.message.includes("500")) {

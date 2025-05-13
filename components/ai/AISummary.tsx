@@ -91,7 +91,7 @@ FORMAT YOUR RESPONSE CAREFULLY:
       console.error("Error in AISummary:", e);
       if (e instanceof Error) {
         if (e.message.includes("API key not configured")) {
-          setError("API key not configured. Please check your environment variables.");
+          setError("Service temporarily unavailable. Please try again later.");
         } else if (e.message.includes("404")) {
           setError("Unable to access GitHub data. Please verify your account connection.");
         } else {
@@ -122,7 +122,7 @@ FORMAT YOUR RESPONSE CAREFULLY:
     <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 mb-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">AI Summary Generator</h2>
-        <ApiKeyStatus />
+        {/* API key status is hidden from the UI */}
       </div>
 
       <p className="text-gray-400 text-sm mb-4">

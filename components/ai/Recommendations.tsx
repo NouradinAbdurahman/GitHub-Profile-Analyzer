@@ -107,7 +107,7 @@ Please structure your response with clear headings and sections for each reposit
       console.error("Error in Recommendations:", e);
       if (e instanceof Error) {
         if (e.message.includes("API key not configured")) {
-          setError("API key not configured. Please check your environment variables.");
+          setError("Service temporarily unavailable. Please try again later.");
         } else if (e.message.includes("busy") || e.message.includes("timeout") || e.message.includes("500")) {
           setError("The AI service is currently busy. Please try again in a moment.");
         } else {

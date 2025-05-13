@@ -29,23 +29,6 @@ export default function ApiKeyStatus() {
     checkApiKeyStatus();
   }, []);
 
-  if (status === "loading") {
-    return <div className="text-sm text-gray-400">Checking API key status...</div>;
-  }
-
-  if (status === "configured") {
-    return (
-      <div className="flex items-center text-sm text-green-400">
-        <CheckCircle className="h-4 w-4 mr-1" />
-        <span>API key configured</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center text-sm text-red-400">
-      <AlertCircle className="h-4 w-4 mr-1" />
-      <span>{message || "API key not configured"}</span>
-    </div>
-  );
+  // Return an empty fragment instead of displaying any status messages
+  return null;
 }
