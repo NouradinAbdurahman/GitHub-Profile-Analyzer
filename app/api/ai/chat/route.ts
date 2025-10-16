@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
         "x-api-key": apiKey,
       },
-      body: JSON.stringify({ model: "deepseek-chat", messages }),
+      body: JSON.stringify({ model: "qwen-3", messages }),
     })
 
     if (!res.ok) {

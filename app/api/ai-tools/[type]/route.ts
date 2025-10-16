@@ -97,7 +97,7 @@ async function callAIModel(
   requestStream: boolean = false // Flag to request stream
 ): Promise<AIModelResponse> {
   const endpoint = "https://console.dakaei.com/api/chat";
-  const modelToUse = "deepseek-chat"; 
+  const modelToUse = "qwen-3"; 
 
   console.log(`Calling DAKAEI API (${modelToUse}) at: ${endpoint} with stream: ${requestStream}, max_tokens: ${maxTokens}`);
 
