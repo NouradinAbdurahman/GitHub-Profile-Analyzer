@@ -38,3 +38,4 @@ next-env.d.ts
 
 # Vercel environment variable template
 scripts/vercel-env-vars.txt
+.env*
