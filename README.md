@@ -56,7 +56,7 @@ A modern, AI-powered GitHub profile analytics platform that provides comprehensi
 - **Animation**: Framer Motion for smooth UI transitions
 - **APIs**:
   - **GitHub API**: For fetching profile and repository data
-  - **DAKAEi API**: Powers AI features for analysis and recommendations
+  - **OpenRouter API**: Powers AI features for analysis and recommendations, with automatic fallback across every free model so a single model going away never breaks the feature
 - **AI**: Custom AI integration for profile analysis
 
 ## 💻 Installation
@@ -99,11 +99,11 @@ cp .env.example .env.local
    - Generate a service account key
    - Save it as `/config/firebase-service-account.json`
 
-6. Get your DAKAEi API Key:
-   - Register at [DAKAEi API Console](https://console.dakaei.com/)
+6. Get your OpenRouter API Key:
+   - Register at [OpenRouter](https://openrouter.ai/) and create a key under Settings → Keys
    - Add your API key to `.env.local`:
    ```
-   DAKAEI_API_KEY=your_dakaei_api_key_here
+   OPENROUTER_API_KEY=your_openrouter_api_key_here
    ```
 
 7. Run the development server
@@ -148,7 +148,7 @@ pnpm dev
 ## 🙏 Acknowledgements
 
 - [GitHub API](https://docs.github.com/en/rest)
-- [DAKAEi API](https://console.dakaei.com/)
+- [OpenRouter API](https://openrouter.ai/)
 - [Next.js](https://nextjs.org/)
 - [Firebase](https://firebase.google.com/)
 - [Tailwind CSS](https://tailwindcss.com/)

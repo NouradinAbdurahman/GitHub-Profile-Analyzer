@@ -31,5 +31,5 @@ SESSION_SECRET=GENERATE_A_SECURE_RANDOM_STRING_OF_32_CHARS_OR_MORE
 # This should be added as a single line JSON string (use a JSON minifier)
 FIREBASE_SERVICE_ACCOUNT_KEY="your_minified_firebase_service_account_key_json_here"
 
-# Dakaei API Key for AI features
-DAKAEI_API_KEY=your_dakaei_api_key_here
+# OpenRouter API Key for AI features (https://openrouter.ai -> Keys)
+OPENROUTER_API_KEY=your_openrouter_api_key_here

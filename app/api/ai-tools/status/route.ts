@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
 
 /**
- * Checks if the DAKAEI_API_KEY environment variable is configured on the server.
+ * Checks if the OPENROUTER_API_KEY environment variable is configured on the server.
  * This endpoint is used by the frontend to determine if AI tools can be run.
  */
 export async function GET() {
-  const apiKey = process.env.DAKAEI_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (apiKey && apiKey.length > 0) {
     // Key is present
     return NextResponse.json({ configured: true });
   } else {
     // Key is missing or empty
-    console.warn("DAKAEI_API_KEY is not configured in environment variables.");
+    console.warn("OPENROUTER_API_KEY is not configured in environment variables.");
     return NextResponse.json({ configured: false });
   }
 }

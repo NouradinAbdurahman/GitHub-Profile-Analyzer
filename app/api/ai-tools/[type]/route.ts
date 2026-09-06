@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod'; // Using Zod for validation
+import { chatStreamWithFallback, chatWithFallback } from '@/lib/openrouter';
 
 // --- Server-side GitHub Data Fetching Helpers ---
 
@@ -89,75 +90,35 @@ interface AIModelResponse {
   result?: string; // Return full result if non-streaming succeeds
 }
 
-// Modified to handle potential stream or error/full result
+// Streams a response from OpenRouter, automatically falling back across every
+// free model if the preferred one is unavailable, rate-limited, or removed.
 async function callAIModel(
-  apiKey: string, 
-  prompt: string, 
+  apiKey: string,
+  prompt: string,
   maxTokens: number = 1500, // Keep a high limit, stream controls actual length
   requestStream: boolean = false // Flag to request stream
 ): Promise<AIModelResponse> {
-  const endpoint = "https://console.dakaei.com/api/chat";
-  const modelToUse = "qwen-3"; 
-
-  console.log(`Calling DAKAEI API (${modelToUse}) at: ${endpoint} with stream: ${requestStream}, max_tokens: ${maxTokens}`);
-
   try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: modelToUse,
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: maxTokens, // Use potentially high limit
-        temperature: 0.7, 
-        stream: requestStream, // Set based on parameter
-      }),
-      // Important for Cloudflare/Vercel edge environments: prevent duplex streaming issues
-      // @ts-ignore
-      duplex: 'half' 
-    });
-
-    // If response is not OK, try to parse error and return
-    if (!response.ok) {
-      let errorData;
-      try {
-        errorData = await response.json();
-        console.error("DAKAEI API Error:", response.status, JSON.stringify(errorData.error || errorData, null, 2));
-        const errorMessage = errorData.error?.message || `DAKAEI API request failed with status ${response.status}`;
-        return { error: errorMessage };
-      } catch (parseError) {
-        // If parsing error fails, return status text
-        console.error("DAKAEI API Error: Status", response.status, "Failed to parse error body.");
-        return { error: `DAKAEI API request failed with status ${response.status}` };
-      }
+    if (requestStream) {
+      const { stream, modelUsed } = await chatStreamWithFallback(
+        apiKey,
+        [{ role: "user", content: prompt }],
+        { maxTokens }
+      );
+      console.log(`AI tool served by OpenRouter model (stream): ${modelUsed}`);
+      return { stream };
     }
 
-    // If streaming was requested and response body exists
-    if (requestStream && response.body) {
-      console.log("DAKAEI API returned a stream.");
-      return { stream: response.body }; // Return the readable stream
-    }
-
-    // If not streaming, parse the full response
-    if (!requestStream) {
-       const data = await response.json();
-       const resultText = data.choices?.[0]?.message?.content;
-       if (!resultText) {
-          console.error("Could not find result text in DAKAEI non-stream response:", JSON.stringify(data, null, 2));
-          return { error: "AI response format was unexpected." };
-       }
-       return { result: resultText.trim() };
-    }
-    
-    // Should not happen if stream: true and response.ok, but handle defensively
-    return { error: "AI response handling error." };
-
+    const { content, modelUsed } = await chatWithFallback(
+      apiKey,
+      [{ role: "user", content: prompt }],
+      { maxTokens }
+    );
+    console.log(`AI tool served by OpenRouter model: ${modelUsed}`);
+    return { result: content.trim() };
   } catch (error: any) {
-    console.error("Error calling DAKAEI model (fetch failed):", error); 
-    return { error: `Failed to call AI model: ${error.message}` };
+    console.error("All OpenRouter fallback attempts failed:", error);
+    return { error: error.message || "AI service is currently unavailable" };
   }
 }
 
@@ -232,10 +193,10 @@ export async function GET(
   console.log(`[${type}] Request received (Streaming).`);
 
   // 1. Check API Key
-  const apiKey = process.env.DAKAEI_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    console.error("DAKAEI_API_KEY is not configured.");
-    return NextResponse.json({ error: 'DAKAEI_API_KEY is not configured on the server.' }, { status: 500 });
+    console.error("OPENROUTER_API_KEY is not configured.");
+    return NextResponse.json({ error: 'OPENROUTER_API_KEY is not configured on the server.' }, { status: 500 });
   }
 
   // 2. Validate Input Type Manually

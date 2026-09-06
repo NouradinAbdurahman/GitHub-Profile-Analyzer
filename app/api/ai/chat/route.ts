@@ -1,14 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getDakaeiApiKey } from "@/lib/env-utils"
+import { getOpenRouterApiKey } from "@/lib/env-utils"
 import { preprocessAIResponse } from "@/lib/server-text-processor"
+import { chatWithFallback, type ChatMessage } from "@/lib/openrouter"
 
 export async function POST(request: NextRequest) {
   try {
     // Get the API key from environment variables (server-side only)
-    const apiKey = getDakaeiApiKey()
+    const apiKey = getOpenRouterApiKey()
 
     if (!apiKey) {
-      console.error("DAKAEI_API_KEY environment variable is not configured")
+      console.error("OPENROUTER_API_KEY environment variable is not configured")
       return NextResponse.json(
         { error: "API key not configured on the server" },
         { status: 500 }
@@ -26,45 +27,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Forward the request to the AI service
-    const res = await fetch("https://console.dakaei.com/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-      },
-      body: JSON.stringify({ model: "qwen-3", messages }),
-    })
+    try {
+      const { content, modelUsed } = await chatWithFallback(apiKey, messages as ChatMessage[])
 
-    if (!res.ok) {
-      const errorText = await res.text().catch(() => "Unknown error")
-      console.error(`AI API error: ${res.status} ${errorText}`)
-      return NextResponse.json(
-        { error: `API returned ${res.status}: ${errorText}` },
-        { status: res.status }
-      )
-    }
-
-    // Get the AI service response
-    const data = await res.json()
-
-    // Pre-process the AI response text to fix any character duplication or word repetition issues
-    if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
-      const originalContent = data.choices[0].message.content
-
-      // Apply server-side text preprocessing
-      const processedContent = preprocessAIResponse(originalContent)
-
-      // Update the response with the processed content
-      data.choices[0].message.content = processedContent
-
-      // Log if we made changes to help with debugging
-      if (originalContent !== processedContent) {
+      // Pre-process the AI response text to fix any character duplication or word repetition issues
+      const processedContent = preprocessAIResponse(content)
+      if (content !== processedContent) {
         console.log("Server-side text preprocessing applied to AI response")
       }
-    }
 
-    return NextResponse.json(data)
+      console.log(`AI chat served by OpenRouter model: ${modelUsed}`)
+
+      return NextResponse.json({
+        choices: [{ message: { content: processedContent } }],
+        model: modelUsed,
+      })
+    } catch (aiError: any) {
+      console.error("All OpenRouter fallback attempts failed:", aiError)
+      return NextResponse.json(
+        { error: aiError.message || "AI service is currently unavailable" },
+        { status: 502 }
+      )
+    }
   } catch (error) {
     console.error("Error in AI chat API route:", error)
     return NextResponse.json(

@@ -3,15 +3,15 @@
  */
 
 /**
- * Check if the DAKAEI API key is configured
+ * Check if the OpenRouter API key is configured
  */
-export function isDakaeiApiKeyConfigured(): boolean {
-  return !!process.env.DAKAEI_API_KEY;
+export function isOpenRouterApiKeyConfigured(): boolean {
+  return !!process.env.OPENROUTER_API_KEY;
 }
 
 /**
- * Get the DAKAEI API key
+ * Get the OpenRouter API key
  */
-export function getDakaeiApiKey(): string | undefined {
-  return process.env.DAKAEI_API_KEY;
+export function getOpenRouterApiKey(): string | undefined {
+  return process.env.OPENROUTER_API_KEY;
 }
