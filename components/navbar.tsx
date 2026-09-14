@@ -16,17 +16,17 @@ import { Github, LogOut, User, Star, BrainCircuit, BookmarkIcon } from "lucide-r
 import { Sheet, SheetTrigger, SheetContent, SheetClose } from "@/components/ui/sheet"
 import { Menu } from "lucide-react"
 import { NotificationsPopover } from "@/components/notifications"
+import { BrandLogo } from "@/components/brand-logo"
 
 export default function Navbar() {
   const { user, login, logout } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3 w-full xl:px-12 2xl:px-20">
+      <div className="container flex items-center justify-between py-3">
         <div className="flex items-center gap-3 min-w-0">
-          <Link href="/" className="flex items-center gap-2 sm:gap-3 font-extrabold text-sm sm:text-lg tracking-tight text-primary whitespace-nowrap">
-            <Github className="h-6 w-6 sm:h-7 sm:w-7" />
-            <span className="truncate">GitHub Profile Analyzer</span>
+          <Link href="/" className="min-w-0">
+            <BrandLogo />
           </Link>
         </div>
 
@@ -103,8 +103,7 @@ export default function Navbar() {
             <SheetContent side="left" className="p-0 w-64">
               <div className="flex flex-col h-full">
                 <div className="flex items-center gap-2 px-6 py-4 border-b">
-                  <Github className="h-5 w-5" />
-                  <span className="font-bold text-sm">GitHub Profile Analyzer</span>
+                  <BrandLogo size="sm" />
                 </div>
                 <div className="flex flex-col gap-2 p-6 flex-1">
                   <ThemeToggle />

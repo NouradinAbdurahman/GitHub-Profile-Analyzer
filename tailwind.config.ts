@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import defaultTheme from "tailwindcss/defaultTheme";
 
 const config: Config = {
     darkMode: ["class"],
@@ -9,8 +10,33 @@ const config: Config = {
     "*.{js,ts,jsx,tsx,mdx}"
   ],
   theme: {
+  	container: {
+  		center: true,
+  		padding: {
+  			DEFAULT: '1.5rem',
+  			xl: '3rem',
+  			'2xl': '5rem'
+  		},
+  		screens: {
+  			sm: '640px',
+  			md: '768px',
+  			lg: '1024px',
+  			xl: '1280px',
+  			'2xl': '1280px'
+  		}
+  	},
   	extend: {
+  		fontFamily: {
+  			sans: ["var(--font-sans)", ...defaultTheme.fontFamily.sans],
+  			display: ["var(--font-display)", ...defaultTheme.fontFamily.sans],
+  			mono: ["var(--font-mono)", ...defaultTheme.fontFamily.mono]
+  		},
   		colors: {
+  			signal: 'hsl(var(--signal))',
+  			ember: 'hsl(var(--ember))',
+  			teal: 'hsl(var(--teal))',
+  			violet: 'hsl(var(--violet))',
+  			rose: 'hsl(var(--rose))',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -45,11 +71,11 @@ const config: Config = {
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
   			chart: {
-  				'1': 'hsl(var(--chart-1))',
-  				'2': 'hsl(var(--chart-2))',
-  				'3': 'hsl(var(--chart-3))',
-  				'4': 'hsl(var(--chart-4))',
-  				'5': 'hsl(var(--chart-5))'
+  				'1': 'var(--chart-1)',
+  				'2': 'var(--chart-2)',
+  				'3': 'var(--chart-3)',
+  				'4': 'var(--chart-4)',
+  				'5': 'var(--chart-5)'
   			},
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',

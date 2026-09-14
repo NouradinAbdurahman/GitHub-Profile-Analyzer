@@ -224,7 +224,7 @@ export default function SavedAnalysesPage() {
   }
 
   return (
-    <div className="container max-w-7xl mx-auto py-10 px-6 sm:px-8 lg:py-14">
+    <div className="container py-10 lg:py-14">
       {/* Remove Temporary count display for debugging */}
       {/* <div className="my-4 p-2 bg-yellow-100 text-yellow-800 border border-yellow-300 rounded">
         Debug: Number of analyses in state: {analyses.length}

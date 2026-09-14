@@ -6,14 +6,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { RepositoriesTabWrapper } from "@/components/repositories-tab-wrapper"
 import dynamic from "next/dynamic"
 import { useEffect, useState, useMemo } from "react"
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, Legend, CartesianGrid } from 'recharts';
 import { StatsDashboard } from "@/components/stats-dashboard";
 import { LoadingSpinner, SimpleLoadingSpinner } from "@/components/loading-spinner";
 import { WatchProfileButton } from "@/components/watch-profile-button";
 import { recordProfileView } from "@/lib/firebase";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, FolderGit2, Activity as ActivityIcon, Code2, BarChart3, Sparkles } from "lucide-react";
+import { getLanguageColor } from "@/lib/language-colors";
 
 // Simple dynamic import with SSR disabled
 const ProfileAITools = dynamic(
@@ -325,16 +326,6 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius = 0, outerRadius 
   );
 };
 
-// Colors for pie chart - expanded
-const colors = [
-  "#3498db", "#9b59b6", "#2ecc71", "#f1c40f", "#e74c3c", 
-  "#1abc9c", "#34495e", "#e67e22", "#7f8c8d", "#27ae60",
-  "#2980b9", "#8e44ad", "#c0392b", "#16a085", "#d35400",
-  "#f39c12", "#bdc3c7", "#c7ecee", "#ff7f50", "#ff6b81",
-  "#5f27cd", "#00d2d3", "#48dbfb", "#1dd1a1", "#ff9f43",
-  "#54a0ff", "#576574", "#eccc68", "#ff6348", "#1abc9c",
-];
-
 export default function ProfilePage() {
   // Use the useParams hook to properly get the username parameter
   const params = useParams()
@@ -484,19 +475,32 @@ export default function ProfilePage() {
     if (active && payload && payload.length) {
       const data = payload[0].payload as MonthlyActivityData; // Type assertion
       return (
-        <div className="rounded-md border bg-background px-3 py-2 shadow-sm text-sm">
-          <p className="font-semibold mb-1">{`Month: ${label}`}</p>
-          <ul className="list-none p-0 space-y-1">
-             {data.commits > 0 && <li className="text-indigo-500">{`Commits: ${data.commits}`}</li>}
-             {data.issues > 0 && <li className="text-green-500">{`Issues Opened: ${data.issues}`}</li>}
-             {data.prs > 0 && <li className="text-purple-500">{`PRs Opened: ${data.prs}`}</li>}
-             <li className="pt-1 mt-1 border-t border-border/50 font-medium">{`Total: ${data.total} events`}</li>
+        <div className="glass-panel rounded-lg px-3 py-2.5 text-sm shadow-lg shadow-black/20">
+          <p className="mb-1.5 font-medium">{label}</p>
+          <ul className="list-none space-y-1 p-0 font-mono text-xs">
+             {data.commits > 0 && <li className="text-signal">{`Commits  ${data.commits}`}</li>}
+             {data.issues > 0 && <li className="text-teal">{`Issues   ${data.issues}`}</li>}
+             {data.prs > 0 && <li className="text-violet">{`PRs      ${data.prs}`}</li>}
+             <li className="mt-1 border-t border-border/60 pt-1.5 font-medium text-foreground">{`Total  ${data.total}`}</li>
           </ul>
         </div>
       );
     }
     return null;
   };
+
+  // Section header used inside each tab panel — icon chip + title + one-line description.
+  const PanelHeading = ({ icon: Icon, title, description }: { icon: any; title: string; description?: string }) => (
+    <div className="mb-4 flex items-center gap-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-signal/10">
+        <Icon className="h-4 w-4 text-signal" />
+      </span>
+      <div>
+        <h3 className="font-display text-base sm:text-lg font-semibold leading-tight">{title}</h3>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -507,13 +511,13 @@ export default function ProfilePage() {
   }
 
   if (error || !userData) {
-    return <div className="container mx-auto px-2 sm:px-4 py-8">Error: {error || "User not found"}</div>
+    return <div className="container py-8">Error: {error || "User not found"}</div>
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 lg:px-12 py-8 text-sm sm:text-base">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-y-8 gap-x-8 sm:gap-x-8">
-        <div className="min-w-0 w-full h-full flex flex-col">
+    <div className="container py-8 text-sm sm:text-base">
+      <div className="grid grid-cols-1 gap-y-8 gap-x-8 sm:gap-x-8 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
+        <div className="min-w-0 w-full h-full flex flex-col lg:sticky lg:top-20 lg:self-start">
           <ProfileCard user={userData} />
           {/* Display watch profile button only when user is viewing someone else's profile */}
           {user?.login && user.login !== username && (
@@ -525,28 +529,39 @@ export default function ProfilePage() {
 
         <div className="min-w-0 w-full h-full flex flex-col">
           <Tabs defaultValue="repositories">
-            <div className="overflow-x-auto pb-2">
-              <TabsList className="mb-2 sm:mb-4 w-full min-w-0 flex-nowrap overflow-x-auto">
-                <TabsTrigger value="repositories" className="whitespace-nowrap text-[10px] sm:text-xs md:text-sm py-2 px-2">Repositories</TabsTrigger>
-                <TabsTrigger value="activity" className="whitespace-nowrap text-[10px] sm:text-xs md:text-sm py-2 px-2">Activity</TabsTrigger>
-                <TabsTrigger value="languages" className="whitespace-nowrap text-[10px] sm:text-xs md:text-sm py-2 px-2">Languages</TabsTrigger>
-                <TabsTrigger value="stats" className="whitespace-nowrap text-[10px] sm:text-xs md:text-sm py-2 px-2">Stats</TabsTrigger>
-                <TabsTrigger value="ai-tools" className="whitespace-nowrap text-[10px] sm:text-xs md:text-sm py-2 px-2">AI Tools</TabsTrigger>
+            <div className="overflow-x-auto">
+              <TabsList className="mb-4 sm:mb-6 w-full min-w-0 flex-nowrap justify-start overflow-x-auto">
+                <TabsTrigger value="repositories" className="whitespace-nowrap text-xs sm:text-sm">
+                  <FolderGit2 className="h-3.5 w-3.5" /> Repositories
+                </TabsTrigger>
+                <TabsTrigger value="activity" className="whitespace-nowrap text-xs sm:text-sm">
+                  <ActivityIcon className="h-3.5 w-3.5" /> Activity
+                </TabsTrigger>
+                <TabsTrigger value="languages" className="whitespace-nowrap text-xs sm:text-sm">
+                  <Code2 className="h-3.5 w-3.5" /> Languages
+                </TabsTrigger>
+                <TabsTrigger value="stats" className="whitespace-nowrap text-xs sm:text-sm">
+                  <BarChart3 className="h-3.5 w-3.5" /> Stats
+                </TabsTrigger>
+                <TabsTrigger value="ai-tools" className="whitespace-nowrap text-xs sm:text-sm">
+                  <Sparkles className="h-3.5 w-3.5" /> AI Tools
+                </TabsTrigger>
               </TabsList>
             </div>
 
             <TabsContent value="repositories">
-              <div className="rounded-lg border p-2 sm:p-6 w-full">
+              <div className="rounded-xl border border-border/70 bg-card p-3 sm:p-6 w-full">
+                <PanelHeading icon={FolderGit2} title="Repositories" description="Public projects, ranked by recent activity" />
                 <RepositoriesTabWrapper username={username} />
               </div>
             </TabsContent>
 
             <TabsContent value="activity">
-              <div className="rounded-lg border p-2 sm:p-6 w-full">
+              <div className="rounded-xl border border-border/70 bg-card p-3 sm:p-6 w-full">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg sm:text-xl font-bold text-center w-full">Activity</h3>
+                  <PanelHeading icon={ActivityIcon} title="Activity" description="Commits, issues and PRs opened over recent months" />
                   {activityData.length > 0 && isMockData && (
-                    <span className="text-xs bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-md flex items-center gap-1">
+                    <span className="text-xs bg-ember/15 text-ember px-2 py-1 rounded-md flex items-center gap-1 shrink-0">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
                       </svg>
@@ -554,13 +569,13 @@ export default function ProfilePage() {
                     </span>
                   )}
                 </div>
-                
+
                 {activityLoading ? (
                   <div className="flex items-center justify-center h-[250px]">
                     <SimpleLoadingSpinner size="md" text="Loading activity data" />
                   </div>
                 ) : activityError ? (
-                  <div className="p-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-800 text-red-500">
+                  <div className="p-4 border border-destructive/30 rounded-lg bg-destructive/10 text-destructive">
                     <p className="mb-2 font-semibold">Error loading activity</p>
                     <p className="text-sm">{activityError}</p>
                     <Button 
@@ -608,27 +623,25 @@ export default function ProfilePage() {
                 ) : (
                   <div>
                     {isMockData && (
-                      <div className="mb-4 p-3 border border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800 rounded-md text-xs text-yellow-800 dark:text-yellow-200">
-                        <p className="font-medium">⚠️ Sample Data</p>
-                        <p>This is generated sample data and does not represent actual GitHub activity.</p>
-                        <p className="mt-1">To see real data, please check if your GitHub token is valid in your environment variables.</p>
+                      <div className="mb-4 p-3 border border-ember/30 bg-ember/10 rounded-lg text-xs text-ember">
+                        <p className="font-medium">Sample data</p>
+                        <p className="text-ember/90">This is generated sample data and does not represent actual GitHub activity.</p>
+                        <p className="mt-1 text-ember/90">To see real data, check that your GitHub token is valid in your environment variables.</p>
                       </div>
                     )}
-                    <div className="text-xs sm:text-base text-muted-foreground mb-4">
-                      Public contributions (commits, issues/PRs opened) over the past months
-                    </div>
                     <div className="p-1 sm:p-4">
                       <ResponsiveContainer width="100%" height={250}>
                         <BarChart data={activityData}>
-                          <XAxis dataKey="month" className="text-xs sm:text-sm" />
-                          <YAxis allowDecimals={false} className="text-xs sm:text-sm" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                          <XAxis dataKey="month" className="text-xs sm:text-sm" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+                          <YAxis allowDecimals={false} className="text-xs sm:text-sm" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} width={28} />
                           <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))' }}/>
-                          <Legend wrapperStyle={{ textAlign: 'center', fontSize: '0.85rem' }} />
                           <Bar
                             dataKey="total"
-                            fill={isMockData ? "#9ca3af" : "#6366f1"}
-                            name="Total Events"
-                            radius={[4, 4, 0, 0]}
+                            fill={isMockData ? "hsl(var(--muted-foreground))" : "hsl(var(--signal))"}
+                            name="Total events"
+                            radius={[6, 6, 0, 0]}
+                            maxBarSize={40}
                             animationDuration={1000}
                           />
                         </BarChart>
@@ -640,14 +653,14 @@ export default function ProfilePage() {
             </TabsContent>
 
             <TabsContent value="languages">
-              <div className="rounded-lg border p-2 sm:p-6 w-full">
-                <h3 className="mb-4 text-xl font-bold text-center">Languages</h3>
+              <div className="rounded-xl border border-border/70 bg-card p-3 sm:p-6 w-full">
+                <PanelHeading icon={Code2} title="Languages" description="Share of each language across public repositories" />
                 {languageLoading ? (
                   <div className="flex items-center justify-center h-[250px]">
                     <SimpleLoadingSpinner size="md" text="Loading language data" />
                   </div>
                 ) : languageError ? (
-                  <p className="text-red-500">{languageError}</p>
+                  <p className="text-destructive">{languageError}</p>
                 ) : languageData.length === 0 ? (
                   <p className="text-muted-foreground">No language data available.</p>
                 ) : (
@@ -658,8 +671,10 @@ export default function ProfilePage() {
                           data={languageData}
                           cx="50%"
                           cy="50%"
-                          outerRadius={90}
-                          fill="#8884d8"
+                          innerRadius={54}
+                          outerRadius={92}
+                          paddingAngle={2}
+                          cornerRadius={4}
                           dataKey="value"
                           nameKey="name"
                           labelLine={false}
@@ -668,7 +683,7 @@ export default function ProfilePage() {
                           animationDuration={800}
                         >
                           {languageData.map((entry: LanguageData, index: number) => (
-                            <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                            <Cell key={`cell-${index}`} fill={getLanguageColor(entry.name)} stroke="hsl(var(--card))" strokeWidth={2} />
                           ))}
                         </Pie>
                         <Legend
@@ -677,7 +692,18 @@ export default function ProfilePage() {
                           align="center"
                           wrapperStyle={{ paddingTop: '20px', textAlign: 'center', fontSize: '0.85rem' }}
                         />
-                        <RechartsTooltip formatter={(value: number, name: string, props: any) => [`${props.payload.percent ? (props.payload.percent * 100).toFixed(1) : '?'}%`, name]}/>
+                        <RechartsTooltip
+                          content={({ active, payload }: any) =>
+                            active && payload?.length ? (
+                              <div className="glass-panel rounded-lg px-3 py-2 text-sm shadow-lg shadow-black/20">
+                                <span className="font-medium">{payload[0].name}</span>{" "}
+                                <span className="font-mono text-muted-foreground">
+                                  {payload[0].payload?.percent ? (payload[0].payload.percent * 100).toFixed(1) : "?"}%
+                                </span>
+                              </div>
+                            ) : null
+                          }
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -686,13 +712,14 @@ export default function ProfilePage() {
             </TabsContent>
 
             <TabsContent value="stats">
-              <div className="rounded-lg border p-2 sm:p-6 w-full text-center text-sm sm:text-base">
+              <div className="rounded-xl border border-border/70 bg-card p-3 sm:p-6 w-full text-sm sm:text-base">
                 <StatsDashboard username={username} />
               </div>
             </TabsContent>
 
             <TabsContent value="ai-tools">
-              <div className="rounded-lg border p-2 sm:p-6 w-full text-sm sm:text-base">
+              <div className="rounded-xl border border-border/70 bg-card p-3 sm:p-6 w-full text-sm sm:text-base">
+                <PanelHeading icon={Sparkles} title="AI Tools" description="Generate a summary, resume bullets, and profile tips" />
                 {userData ? (
                   <ProfileAITools 
                     user={userData} 

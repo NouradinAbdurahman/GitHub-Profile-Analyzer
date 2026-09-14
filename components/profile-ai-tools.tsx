@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { SimpleLoadingSpinner } from "@/components/loading-spinner"; // Assuming this exists
-import { Bookmark, CheckCircle2, XCircle, Sparkles, Play, Pause } from "lucide-react"; // Added Play and Pause
+import { Bookmark, Sparkles, SlidersHorizontal, Compass, IdCard, ListChecks, Mail, type LucideIcon } from "lucide-react";
 import { saveAnalysisResult } from "@/lib/firebase"; // Import the save function
-import { stripMarkdownSymbols } from "@/lib/text-normalizer"; // Import the stripMarkdownSymbols function
+import { streamAIToolResult } from "@/lib/ai-tool-stream";
+import { sanitizeAIHtml } from "@/lib/sanitize-ai-html";
 import {
   Tooltip,
   TooltipContent,
@@ -17,27 +19,57 @@ import { useAuth } from "@/components/auth-provider";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-const toolConfigs = [
+const toolConfigs: Array<{
+  type: string
+  label: string
+  description: string
+  icon: LucideIcon
+  actionVerb: string
+  needsRole?: boolean
+}> = [
   {
     type: "summary",
     label: "Profile Summary",
     description: "Auto-generates a concise summary of the profile based on stats.",
-    emoji: "✨",
+    icon: Sparkles,
     actionVerb: "Generate Summary",
   },
   {
     type: "optimizer",
     label: "Profile Optimizer",
     description: "Analyzes and suggests improvements for the profile.",
-    emoji: "⚙️",
+    icon: SlidersHorizontal,
     actionVerb: "Analyze Profile",
   },
   {
     type: "recommendations",
     label: "Repo Recommendations", // Changed label based on image
     description: "Gives personalized recommendations for growth and collaboration.",
-    emoji: "🌟",
+    icon: Compass,
     actionVerb: "Get Recommendations",
+  },
+  {
+    type: "bio-picks",
+    label: "Bio & Pins",
+    description: "Rewrites the bio and suggests which repos to pin.",
+    icon: IdCard,
+    actionVerb: "Draft Bio & Picks",
+    needsRole: true,
+  },
+  {
+    type: "resume-bullets",
+    label: "Resume Bullets",
+    description: "Turns top repos and stats into resume-ready bullet points.",
+    icon: ListChecks,
+    actionVerb: "Generate Bullets",
+  },
+  {
+    type: "cover-letter",
+    label: "Why Hire Me",
+    description: "Drafts a short first-person blurb grounded in this profile's work.",
+    icon: Mail,
+    actionVerb: "Draft Blurb",
+    needsRole: true,
   },
 ];
 
@@ -125,19 +157,6 @@ interface ProfileAIToolsProps {
   onLoginClick: () => void; // Function to trigger login flow
 }
 
-// 1. Add a helper function to wait while paused:
-function waitWhilePaused(type: string, paused: Record<string, boolean>) {
-  return new Promise<void>((resolve) => {
-    if (!paused[type]) return resolve();
-    const interval = setInterval(() => {
-      if (!paused[type]) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 100);
-  });
-}
-
 export default function ProfileAITools({ user, onLoginClick }: ProfileAIToolsProps) {
   const { user: loggedInUser } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
@@ -148,7 +167,7 @@ export default function ProfileAITools({ user, onLoginClick }: ProfileAIToolsPro
   const [showLoginDialog, setShowLoginDialog] = useState(false); // State for dialog visibility
   const [isStreaming, setIsStreaming] = useState<string | null>(null); // Track which tool is streaming
   const [saveSuccessAnimation, setSaveSuccessAnimation] = useState<boolean>(false); // State for save success animation
-  const [paused, setPaused] = useState<Record<string, boolean>>({}); // Add a paused state for each tool
+  const [roleInputs, setRoleInputs] = useState<Record<string, string>>({}); // Optional target role for tools that use it
 
   // Add a style element for our custom animations
   useEffect(() => {
@@ -180,137 +199,31 @@ export default function ProfileAITools({ user, onLoginClick }: ProfileAIToolsPro
     checkApiKeyStatus();
   }, []); // Run only once on mount
 
-  // Helper function to generate instant preliminary results based on GitHub data
-  const generatePreliminaryResult = (type: string, userData: any) => {
-    const { login, name, bio, public_repos, followers, following, created_at } = userData || {};
-    const joinDate = created_at ? new Date(created_at).toLocaleDateString() : 'unknown date';
-    const userName = name || login || 'this user';
-    
-    switch(type) {
-      case 'summary':
-        return `${userName} is a GitHub user with ${public_repos || 0} repositories, active since ${joinDate}. With ${followers || 0} followers and following ${following || 0} users, their profile suggests a focus on ${following > followers ? 'learning and collaboration' : 'independent development or private projects'}.`;
-      
-      case 'optimizer':
-        return `## Profile Observations
-* ${bio ? 'Bio exists but could potentially be enhanced' : 'Adding a bio would improve profile visibility'}
-* Repository count: ${public_repos || 0} ${public_repos > 5 ? '(good variety)' : '(consider adding more public projects)'}
-* Profile engagement: ${followers || 0} followers, ${following || 0} following`;
-      
-      case 'recommendations':
-        return `## Potential Opportunities
-
-Based on your profile stats and activity patterns:
-
-1. Consider exploring projects aligned with your repository themes
-2. Look for collaboration opportunities in related communities
-3. Enhance visibility through consistent contributions`;
-        
-      default:
-        return "Processing...";
-    }
-  };
-  
   // --- Updated handleRunTool for Seamless Transitions ---
   const handleRunTool = async (type: string) => {
     if (apiKeyStatus !== 'configured') {
       setToast("Service temporarily unavailable. Please try again later.");
       return;
     }
-    
+
     console.log(`Running tool: ${type} (Enhanced Response Strategy)`);
     setLoading(type);
     setToast("");
-    
+
     // Reset states
     setResults((prev) => ({ ...prev, [type]: "" }));
     setSavedResults((prev) => ({ ...prev, [type]: "" }));
     setIsStreaming(null);
-    
+
     try {
-      // STEP 1: Fetch GitHub data 
-      const userDataResponse = await fetch(`/api/github/user/${encodeURIComponent(user?.login || user?.username || "")}`);
-      
-      if (!userDataResponse.ok) {
-        throw new Error(`Failed to fetch GitHub data: ${userDataResponse.status}`);
+      let endpoint = `/api/ai-tools/${type}?username=${encodeURIComponent(user?.login || user?.username || "")}`;
+      const role = roleInputs[type]?.trim();
+      if (role) {
+        endpoint += `&role=${encodeURIComponent(role)}`;
       }
-      
-      const userData = await userDataResponse.json();
-      
-      // STEP 3: After a brief moment, call AI service
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const endpoint = `/api/ai-tools/${type}?username=${encodeURIComponent(user?.login || user?.username || "")}`;
-      const response = await fetch(endpoint);
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to run ${type}. Status: ${response.status}`);
-      }
-      
-      if (!response.body) {
-        throw new Error("Response body is missing.");
-      }
-      
-      // Stream handling 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let done = false;
-      let accumulatedResponse = ""; 
-      let unprocessedText = "";
-      
-      // Process the stream
-      while (!done) {
-        const { value, done: readerDone } = await reader.read();
-        done = readerDone;
-        const chunk = decoder.decode(value, { stream: !done });
-        unprocessedText += chunk;
-        
-        // Process buffer line by line for SSE messages
-        let eolIndex;
-        while ((eolIndex = unprocessedText.indexOf('\n')) >= 0) {
-          const line = unprocessedText.substring(0, eolIndex).trim();
-          unprocessedText = unprocessedText.substring(eolIndex + 1);
-          
-          if (line.startsWith("data:")) {
-            const jsonData = line.substring(5).trim();
-            if (jsonData === "[DONE]") {
-              done = true;
-              break;
-            }
-            
-            try {
-              const parsed = JSON.parse(jsonData);
-              const deltaContent = parsed.choices?.[0]?.delta?.content;
-              if (deltaContent) {
-                accumulatedResponse += deltaContent;
-                
-                // Once we have a substantial AI response, switch to AI phase
-                if (accumulatedResponse.length > 50) {
-                  // Strip markdown symbols from the response
-                  const cleanResponse = stripMarkdownSymbols(accumulatedResponse);
-                  setResults(prev => ({ ...prev, [type]: cleanResponse }));
-                }
-              }
-              
-              if (parsed.choices?.[0]?.finish_reason === 'stop') {
-                done = true;
-              }
-            } catch (e) {
-              // Handle parsing errors
-            }
-          }
-        }
-        
-        // 2. In handleRunTool, after processing each chunk in the streaming loop, add:
-        await waitWhilePaused(type, paused);
-      }
-      
-      // Ensure final content is set with stripped markdown
-      if (accumulatedResponse.length > 0) {
-        const cleanResponse = stripMarkdownSymbols(accumulatedResponse);
-        setResults(prev => ({ ...prev, [type]: cleanResponse }));
-      }
-      
+      await streamAIToolResult(endpoint, (cleanText) => {
+        setResults((prev) => ({ ...prev, [type]: cleanText }));
+      });
     } catch (err: any) {
       console.error(`Error running ${type}:`, err);
       setToast(err.message || "Unknown error running tool");
@@ -375,62 +288,77 @@ Based on your profile stats and activity patterns:
         />
         
         <Tabs defaultValue={toolConfigs[0].type} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 mb-6">
             {toolConfigs.map((tool) => (
-              <TabsTrigger key={tool.type} value={tool.type} className="text-[8px] sm:text-xs md:text-sm">{tool.label}</TabsTrigger>
+              <TabsTrigger key={tool.type} value={tool.type} className="text-xs sm:text-sm">
+                <tool.icon className="h-3.5 w-3.5" />
+                <span className="truncate">{tool.label}</span>
+              </TabsTrigger>
             ))}
           </TabsList>
 
           {toolConfigs.map((tool) => (
             <TabsContent key={tool.type} value={tool.type}>
-              <Card className="bg-card border-border shadow-lg dark:bg-gray-800/60 dark:border-gray-700/50">
+              <Card className="border-border/70 bg-card shadow-sm shadow-black/5">
                 <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="text-[12px] sm:text-lg font-semibold">{tool.label} Generator</CardTitle>
-                    {/* API key status is hidden from the UI */}
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-signal/10">
+                      <tool.icon className="h-4 w-4 text-signal" />
+                    </span>
+                    <div>
+                      <CardTitle className="font-display text-base sm:text-lg font-semibold leading-tight">{tool.label} Generator</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm text-muted-foreground">{tool.description}</CardDescription>
+                    </div>
                   </div>
-                  <CardDescription className="text-[10px] sm:text-xs text-muted-foreground">{tool.description}</CardDescription>
                 </CardHeader>
-                <CardContent className="text-[10px] sm:text-xs">
+                <CardContent className="text-sm sm:text-base">
                   {/* Initial loading state */}
                   {loading === tool.type && !results[tool.type] ? (
-                    <div className="flex flex-col items-center justify-center py-10"> 
+                    <div className="flex flex-col items-center justify-center py-10">
                        <SimpleLoadingSpinner text="Processing..." />
                     </div>
                   // Render content area
                   ) : results[tool.type] ? (
-                    <div className="p-4 rounded-md bg-muted/50 dark:bg-gray-700/40 min-h-[5rem] prose dark:prose-invert max-w-none relative text-[10px] sm:text-xs"> 
+                    <div className="relative min-h-[5rem] max-w-none rounded-lg border border-border/60 bg-muted/40 p-4 sm:p-5">
                       {/* AI enhancement indicator - small, subtle, in the top-right corner */}
                       {isStreaming === tool.type && (
-                        <div className="absolute top-2 right-2 text-xs flex items-center gap-1 text-blue-500 dark:text-blue-400 animate-pulse">
+                        <div className="absolute top-3 right-3 flex items-center gap-1 text-xs text-signal animate-pulse">
                           <Sparkles className="h-3 w-3" />
                           <span className="sr-only">Enhancing...</span>
                         </div>
                       )}
-                      
+
                       {/* Content with phase-based rendering */}
                       <div className={isStreaming === tool.type ? 'opacity-50' : 'fade-in'}>
                         {isStreaming === tool.type ? (
                           // AI phase with typewriter effect
-                          <pre className="whitespace-pre-wrap text-xs ai-response" dangerouslySetInnerHTML={{ __html: results[tool.type] }}></pre>
+                          <pre className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed ai-response" dangerouslySetInnerHTML={{ __html: sanitizeAIHtml(results[tool.type]) }}></pre>
                         ) : (
                           // Preliminary phase or final result
-                          <pre className="whitespace-pre-wrap text-xs ai-response" dangerouslySetInnerHTML={{ __html: results[tool.type] }}></pre>
+                          <pre className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed ai-response" dangerouslySetInnerHTML={{ __html: sanitizeAIHtml(results[tool.type]) }}></pre>
                         )}
                       </div>
                     </div>
                   ) : savedResults[tool.type] ? (
-                    <div className="p-4 rounded-md bg-muted/50 dark:bg-gray-700/40 min-h-[5rem] prose dark:prose-invert max-w-none text-[10px] sm:text-xs">
-                       <p className="font-medium text-muted-foreground mb-2">Saved Analysis:</p>
-                       <pre className="whitespace-pre-wrap text-xs">{savedResults[tool.type]}</pre>
+                    <div className="min-h-[5rem] max-w-none rounded-lg border border-border/60 bg-muted/40 p-4 sm:p-5">
+                       <p className="font-medium text-muted-foreground mb-2 text-xs sm:text-sm">Saved Analysis:</p>
+                       <pre className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed">{savedResults[tool.type]}</pre>
                     </div>
                   ) : (
-                     <div className="flex items-center justify-center h-24 text-[10px] sm:text-xs"> 
+                     <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
                        {/* Placeholder when no result and not loading */}
                      </div>
                   )}
                 </CardContent>
-                <CardFooter className="flex justify-start gap-2 text-[10px] sm:text-xs">
+                <CardFooter className="flex flex-wrap items-center gap-2 text-sm">
+                  {tool.needsRole && (
+                    <Input
+                      value={roleInputs[tool.type] || ""}
+                      onChange={(e) => setRoleInputs((prev) => ({ ...prev, [tool.type]: e.target.value }))}
+                      placeholder="Target role (optional), e.g. Frontend Engineer"
+                      className="h-9 w-full sm:w-64 text-xs sm:text-sm"
+                    />
+                  )}
                   <Button
                     onClick={() => handleRunTool(tool.type)}
                     disabled={!!loading || apiKeyStatus !== 'configured'}
@@ -439,7 +367,7 @@ Based on your profile stats and activity patterns:
                   >
                     {loading === tool.type ? "Generating..." : tool.actionVerb}
                   </Button>
-                  
+
                   <Tooltip delayDuration={100}>
                     <TooltipTrigger asChild>
                       <span tabIndex={0}>

@@ -14,6 +14,7 @@ import { ArrowLeft, ExternalLink, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { AnimatedComparisonIcon } from "@/components/animated-comparison-icon"
+import { CompareVerdict } from "@/components/compare-verdict"
 
 export default function ComparePage() {
   const { comparedRepos, removeRepo, clearRepos } = useRepoComparison()
@@ -23,7 +24,7 @@ export default function ComparePage() {
   // If no repositories are being compared, show a message
   if (comparedRepos.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container py-8">
         <div className="mb-6 flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -106,7 +107,7 @@ export default function ComparePage() {
   })
 
   return (
-    <div className="container mx-auto px-4 py-8 pb-24">
+    <div className="container py-8 pb-24">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => router.back()}>
@@ -170,6 +171,8 @@ export default function ComparePage() {
         ))}
       </div>
 
+      <CompareVerdict repos={comparedRepos} />
+
       <Tabs defaultValue="metrics">
         <TabsList className="mb-4 max-[530px]:gap-1 max-[530px]:px-1">
           <TabsTrigger value="metrics">Key Metrics</TabsTrigger>
@@ -190,7 +193,7 @@ export default function ComparePage() {
                     config={{
                       stars: {
                         label: "Stars",
-                        color: "hsl(var(--chart-1))",
+                        color: "var(--chart-1)",
                       },
                     }}
                   >
@@ -219,7 +222,7 @@ export default function ComparePage() {
                     config={{
                       forks: {
                         label: "Forks",
-                        color: "hsl(var(--chart-2))",
+                        color: "var(--chart-2)",
                       },
                     }}
                   >
@@ -248,7 +251,7 @@ export default function ComparePage() {
                     config={{
                       issues: {
                         label: "Issues",
-                        color: "hsl(var(--chart-3))",
+                        color: "var(--chart-3)",
                       },
                     }}
                   >
@@ -277,7 +280,7 @@ export default function ComparePage() {
                     config={{
                       size: {
                         label: "Size (MB)",
-                        color: "hsl(var(--chart-4))",
+                        color: "var(--chart-4)",
                       },
                     }}
                   >
@@ -310,7 +313,7 @@ export default function ComparePage() {
                     config={{
                       age: {
                         label: "Age (days)",
-                        color: "hsl(var(--chart-5))",
+                        color: "var(--chart-5)",
                       },
                     }}
                   >
@@ -368,15 +371,15 @@ export default function ComparePage() {
                     config={{
                       stars: {
                         label: "Stars",
-                        color: "hsl(var(--chart-1))",
+                        color: "var(--chart-1)",
                       },
                       forks: {
                         label: "Forks",
-                        color: "hsl(var(--chart-2))",
+                        color: "var(--chart-2)",
                       },
                       issues: {
                         label: "Issues",
-                        color: "hsl(var(--chart-3))",
+                        color: "var(--chart-3)",
                       },
                     }}
                   >

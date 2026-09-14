@@ -151,8 +151,8 @@ export default function ViewSavedAnalysisPage() {
 
   if (error) {
     return (
-      <div className="container max-w-4xl py-12">
-        <div className="flex flex-col items-center gap-6 text-center">
+      <div className="container py-12">
+        <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 text-center">
           <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center">
             <AlertTriangle className="h-10 w-10 text-muted-foreground/70" />
           </div>
@@ -172,7 +172,8 @@ export default function ViewSavedAnalysisPage() {
   }
 
   return (
-    <div className="container max-w-4xl mx-auto py-10 px-4 sm:px-6">
+    <div className="container py-10">
+    <div className="mx-auto max-w-4xl">
       <Button variant="outline" size="sm" onClick={() => router.back()} className="mb-6 gap-2">
         <ArrowLeft className="h-4 w-4" />
         Back to Saved Analyses
@@ -201,6 +202,7 @@ export default function ViewSavedAnalysisPage() {
           </CardContent>
         </Card>
       )}
+    </div>
     </div>
   )
 } 

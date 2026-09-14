@@ -7,13 +7,14 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
-import { Github, Search, Loader2, XCircle } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { Github, Search, Loader2 } from "lucide-react"
+import { motion } from "framer-motion"
+import { cn } from "@/lib/utils"
 
 export function PublicProfileInput() {
   const [username, setUsername] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [hasError, setHasError] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -24,12 +25,16 @@ export function PublicProfileInput() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
 
     const cleanedUsername = cleanUsername(username);
-    
+
     if (!cleanedUsername) {
-      setError("Please enter a GitHub username to analyze.")
+      setHasError(true)
+      toast({
+        title: "Enter a username",
+        description: "Type a GitHub username to analyze.",
+        variant: "destructive",
+      })
       return
     }
 
@@ -41,7 +46,7 @@ export function PublicProfileInput() {
         method: 'GET',
         cache: 'no-store'
       }).catch(() => null);
-      
+
       if (rateCheckResponse && !rateCheckResponse.ok) {
         const rateData = await rateCheckResponse.json();
         if (rateData.error && rateData.error.includes("rate limit")) {
@@ -57,28 +62,28 @@ export function PublicProfileInput() {
           'Pragma': 'no-cache'
         }
       })
-      
+
       if (response.status === 404) {
         throw new Error(`The GitHub username "${cleanedUsername}" could not be found.`);
       }
-      
+
       if (response.status === 429) {
         throw new Error("GitHub API rate limit exceeded. Please try again later.");
       }
-      
+
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || `Error fetching data for "${cleanedUsername}"`);
       }
-      
+
       // If we get here, the username exists
       router.push(`/profile/${cleanedUsername}`)
     } catch (error: any) {
       console.error("Error checking username:", error)
+      setHasError(true)
       const errorMessage = error.message || "The GitHub username you entered could not be found. Please check and try again.";
-      setError(errorMessage)
       toast({
-        title: "Error",
+        title: "Couldn't find that profile",
         description: errorMessage,
         variant: "destructive",
       })
@@ -88,84 +93,46 @@ export function PublicProfileInput() {
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-4">
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <div className="relative flex-1">
-          <Input
-            type="text"
-            placeholder="Enter GitHub username"
-            value={username}
-            onChange={(e) => {
-              setUsername(e.target.value);
-              setError(null);
-            }}
-            className={`pl-10 text-[10px] sm:text-base h-8 sm:h-10 px-2 sm:px-4 transition-all duration-300 ${error ? "focus-within:ring-red-500 border-red-400" : ""} max-[530px]:text-sm`} // Increased text size for <530px
-          />
-        </div>
-        <Button 
-          type="submit" 
-          disabled={isLoading}
-          className="bg-gray-900 hover:bg-gray-800 text-white transition-all duration-200 text-[10px] sm:text-xs h-8 sm:h-10 px-2 sm:px-4 max-[530px]:px-2 max-[530px]:py-1" // Reduced padding for <530px
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin max-[530px]:h-3 max-[530px]:w-3 max-[530px]:mr-1" /> {/* Adjusted icon size and margin for <530px */}
-              Loading...
-            </>
-          ) : (
-            <>
-              <Search className="mr-2 h-3 w-3 sm:h-4 sm:w-4 max-[530px]:h-3 max-[530px]:w-3 max-[530px]:mr-1" /> {/* Adjusted icon size and margin for <530px */}
-              Analyze
-            </>
+    <form onSubmit={handleSubmit} className="flex max-w-md gap-2">
+      <motion.div
+        className="relative flex-1"
+        animate={hasError ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
+        onAnimationComplete={() => setHasError(false)}
+      >
+        <Input
+          type="text"
+          placeholder="Enter GitHub username"
+          value={username}
+          onChange={(e) => {
+            setUsername(e.target.value);
+            setHasError(false);
+          }}
+          className={cn(
+            "peer h-11 pl-10 pr-4 text-sm transition-all duration-200",
+            "border-border/80 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-0",
+            hasError && "border-red-500/70 focus-visible:border-red-500 focus-visible:ring-red-500/40"
           )}
-        </Button>
-      </form>
-
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ 
-              duration: 0.4, 
-              type: "spring", 
-              stiffness: 300, 
-              damping: 25 
-            }}
-            className="relative rounded-xl overflow-hidden"
-          >
-            <div className="relative bg-[#FFF1F1] rounded-xl p-4 border border-red-200 shadow-md">
-              <div className="flex items-start gap-3">
-                <div className="bg-red-500 p-2.5 rounded-full flex-none">
-                  <XCircle className="h-5 w-5 text-white" />
-                </div>
-                
-                <div className="flex-1 pt-1">
-                  <h3 className="text-red-600 text-lg font-semibold mb-1">Error</h3>
-                  <p className="text-red-500 font-medium">{error}</p>
-                </div>
-                
-                <button 
-                  onClick={() => setError(null)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors mt-1 ml-1 flex-none"
-                  aria-label="Close error message"
-                >
-                  <XCircle className="h-5 w-5" />
-                </button>
-              </div>
-              
-              <motion.div 
-                className="absolute bottom-0 left-0 h-1 bg-red-500"
-                initial={{ width: "100%" }}
-                animate={{ width: "0%" }}
-                transition={{ duration: 7, ease: "linear" }}
-                onAnimationComplete={() => setError(null)}
-              />
-            </div>
-          </motion.div>
+        />
+        <Github className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors peer-focus-visible:text-indigo-500" />
+      </motion.div>
+      <Button
+        type="submit"
+        disabled={isLoading}
+        className="h-11 gap-2 bg-indigo-600 px-5 text-white shadow-sm transition-colors hover:bg-indigo-500 active:bg-indigo-700 disabled:opacity-70 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Analyzing…</span>
+          </>
+        ) : (
+          <>
+            <Search className="h-4 w-4" />
+            <span>Analyze</span>
+          </>
         )}
-      </AnimatePresence>
-    </div>
+      </Button>
+    </form>
   )
 }

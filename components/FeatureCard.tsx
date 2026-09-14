@@ -1,43 +1,73 @@
-"use client";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Search, LockKeyhole, BarChart3, LineChart, Star, Moon, Brain, GitCompareArrows, LayoutDashboard, BellRing, History } from "lucide-react";
-import AnimatedIcon from "@/components/AnimatedIcon";
-import { useState } from 'react'; // Import useState
+import { Card } from "@/components/ui/card"
+import {
+  BarChart3,
+  Brain,
+  GitCompareArrows,
+  LayoutDashboard,
+  BellRing,
+  History,
+  type LucideIcon,
+} from "lucide-react"
 
-const iconMap = {
-  "Real-time Profile Analytics": { icon: BarChart3, color: "text-[#58a6ff]", rotate: 8 },
-  "AI-Powered Insights": { icon: Brain, color: "text-[#f0b72f]", rotate: -8 },
-  "Advanced Comparison Tools": { icon: GitCompareArrows, color: "text-[#238636]", rotate: 8 },
-  "Personalized Dashboard": { icon: LayoutDashboard, color: "text-[#a371f7]", rotate: -8 },
-  "Smart Tracking System": { icon: BellRing, color: "text-[#f0b72f]", rotate: 8 },
-  "Analysis Management": { icon: History, color: "text-[#58a6ff]", rotate: -8 },
-};
+const ICONS: Record<string, LucideIcon> = {
+  "Real-time Profile Analytics": BarChart3,
+  "AI-Powered Insights": Brain,
+  "Advanced Comparison Tools": GitCompareArrows,
+  "Personalized Dashboard": LayoutDashboard,
+  "Smart Tracking System": BellRing,
+  "Analysis Management": History,
+}
 
-export default function FeatureCard({ title, description }: { title: string; description: string }) {
-  const { icon, color, rotate } = iconMap[title as keyof typeof iconMap];
-  const [isHovered, setIsHovered] = useState(false); // Add isHovered state
+// Abstract bar-cluster glyph standing in for "your data, visualized" —
+// intentionally generic so it fits either flagship feature.
+function MiniBars() {
+  const heights = [40, 70, 55, 90, 30]
+  return (
+    <div className="flex h-16 items-end gap-1.5">
+      {heights.map((h, i) => (
+        <div
+          key={i}
+          className="w-2.5 rounded-sm bg-indigo-500 dark:bg-indigo-400"
+          style={{ height: `${h}%`, opacity: 0.35 + (i % 3) * 0.2 }}
+        />
+      ))}
+    </div>
+  )
+}
+
+interface FeatureCardProps {
+  title: string
+  description: string
+  variant?: "flagship" | "compact"
+}
+
+export default function FeatureCard({ title, description, variant = "compact" }: FeatureCardProps) {
+  const Icon = ICONS[title]
+
+  if (variant === "flagship") {
+    return (
+      <Card className="flex flex-col justify-between gap-6 border-border/80 p-6 shadow-none transition-colors hover:border-indigo-500/50 sm:p-8">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <Icon className="mb-4 h-6 w-6 text-indigo-500 dark:text-indigo-400" />
+            <h3 className="text-xl font-semibold tracking-tight sm:text-2xl">{title}</h3>
+            <p className="mt-2 max-w-sm text-sm text-muted-foreground sm:text-base">{description}</p>
+          </div>
+          <div className="hidden shrink-0 sm:block">
+            <MiniBars />
+          </div>
+        </div>
+      </Card>
+    )
+  }
 
   return (
-    <Card
-      className="group relative overflow-hidden p-0 rounded-2xl shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:border-[#58a6ff"
-      onMouseEnter={() => setIsHovered(true)} // Set isHovered to true on mouse enter
-      onMouseLeave={() => setIsHovered(false)} // Set isHovered to false on mouse leave
-    >
-      <CardHeader className="relative z-10 flex flex-col items-center justify-center p-6 max-[530px]:p-4"> {/* Adjusted padding */}
-        <div className="mb-4 flex items-center justify-center max-[530px]:mb-2">
-          <span className="inline-flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/30 to-indigo-400/10 p-4 shadow-lg max-[530px]:p-2">
-            <AnimatedIcon Icon={icon} colorClass={color + ' drop-shadow-[0_0_16px_rgba(99,102,241,0.7)]'} rotate={rotate} small={true} isHovered={isHovered} /> {/* Pass isHovered to AnimatedIcon */}
-          </span>
-        </div>
-        <CardTitle className="text-3xl text-center font-extrabold tracking-tight text-foreground drop-shadow-xl max-[530px]:text-lg max-[530px]:font-bold max-[530px]:leading-tight">
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="relative z-10 px-6 pb-6 pt-2 max-[530px]:px-2 max-[530px]:pb-6 max-[530px]:pt-1">
-        <CardDescription className="text-center text-xl text-muted-foreground font-medium max-[530px]:text-base max-[530px]:font-normal">
-          {description}
-        </CardDescription>
-      </CardContent>
+    <Card className="flex items-start gap-4 border-border/80 p-5 shadow-none transition-colors hover:border-indigo-500/50">
+      <Icon className="mt-0.5 h-5 w-5 shrink-0 text-indigo-500 dark:text-indigo-400" />
+      <div>
+        <h3 className="font-semibold leading-tight">{title}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      </div>
     </Card>
-  );
+  )
 }

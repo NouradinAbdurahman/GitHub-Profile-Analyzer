@@ -3,9 +3,9 @@
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { CalendarDays, MapPin, Users, Star } from "lucide-react"
+import { CalendarDays, MapPin, Users, FolderGit2, ExternalLink } from "lucide-react"
 import { FavoriteButton } from "@/components/favorite-button"
+import { FadeInCard } from "@/components/fade-in-card"
 
 type User = {
   login: string
@@ -25,55 +25,57 @@ type User = {
 }
 
 export function ProfileCard({ user }: { user: User }) {
+  const stats: Array<{ icon: typeof Users; value: number; label: string }> = [
+    { icon: Users, value: user.followers, label: "followers" },
+    { icon: Users, value: user.following, label: "following" },
+    { icon: FolderGit2, value: user.public_repos, label: "repos" },
+  ]
+
   return (
+    <FadeInCard>
     <Card className="overflow-hidden">
       <CardHeader className="relative p-0">
-        <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-500" />
-        <div className="absolute -bottom-12 left-4">
+        <div className="mesh-glow bg-grid-dark h-28" />
+        <div className="absolute -bottom-11 left-5">
           <Image
             src={user.avatar_url || "/placeholder.svg"}
             alt={user.name || user.login}
-            width={96}
-            height={96}
-            className="rounded-full border-4 border-background"
+            width={88}
+            height={88}
+            className="rounded-full border-4 border-card shadow-lg shadow-black/20"
           />
         </div>
       </CardHeader>
 
       <CardContent className="mt-14 space-y-4 pt-2">
         <div>
-          <h2 className="text-base sm:text-2xl font-bold break-words">{user.name || user.login}</h2>
-          <p className="text-[10px] sm:text-sm text-muted-foreground break-words">@{user.login}</p>
+          <h2 className="font-display text-lg sm:text-2xl font-semibold tracking-tight break-words">{user.name || user.login}</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground break-words">@{user.login}</p>
         </div>
 
-        {user.bio && <p className="text-[10px] sm:text-sm break-words">{user.bio}</p>}
+        {user.bio && <p className="text-xs sm:text-sm leading-relaxed text-foreground/90 break-words">{user.bio}</p>}
 
-        <div className="flex flex-wrap gap-2 text-[10px] sm:text-xs">
-          <Badge variant="secondary" className="flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            {user.followers} followers
-          </Badge>
-          <Badge variant="secondary" className="flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            {user.following} following
-          </Badge>
-          <Badge variant="secondary" className="flex items-center gap-1">
-            <Star className="h-3 w-3" />
-            {user.public_repos} repos
-          </Badge>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg border border-border/60 bg-muted/40 px-4 py-3">
+          {stats.map(({ icon: Icon, value, label }) => (
+            <div key={label} className="flex items-baseline gap-1.5">
+              <Icon className="h-3.5 w-3.5 self-center text-signal" />
+              <span className="font-display text-sm sm:text-base font-semibold tabular-nums">{value}</span>
+              <span className="text-[11px] sm:text-xs text-muted-foreground">{label}</span>
+            </div>
+          ))}
         </div>
 
-        <div className="space-y-2 text-[10px] sm:text-xs">
+        <div className="space-y-2 text-xs sm:text-sm text-muted-foreground">
           {user.location && (
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
               <span className="break-words">{user.location}</span>
             </div>
           )}
 
           {user.created_at && (
             <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+              <CalendarDays className="h-3.5 w-3.5 flex-shrink-0" />
               <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
             </div>
           )}
@@ -82,8 +84,9 @@ export function ProfileCard({ user }: { user: User }) {
 
       <CardFooter className="flex gap-2 text-xs sm:text-base">
         <Button asChild className="flex-1 text-xs sm:text-base">
-          <a href={user.html_url} target="_blank" rel="noopener noreferrer">
+          <a href={user.html_url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5">
             View on GitHub
+            <ExternalLink className="h-3.5 w-3.5" />
           </a>
         </Button>
         <FavoriteButton
@@ -97,5 +100,6 @@ export function ProfileCard({ user }: { user: User }) {
         />
       </CardFooter>
     </Card>
+    </FadeInCard>
   )
 }

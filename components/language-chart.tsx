@@ -5,38 +5,7 @@ import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/components/auth-provider"
 import { Loader2 } from "lucide-react"
-
-// Color mapping for common languages
-const languageColors: Record<string, string> = {
-  JavaScript: "#f1e05a",
-  TypeScript: "#2b7489",
-  Python: "#3572A5",
-  HTML: "#e34c26",
-  CSS: "#563d7c",
-  Java: "#b07219",
-  "C++": "#f34b7d",
-  C: "#555555",
-  "C#": "#178600",
-  Ruby: "#701516",
-  Go: "#00ADD8",
-  PHP: "#4F5D95",
-  Swift: "#ffac45",
-  Kotlin: "#A97BFF",
-  Rust: "#dea584",
-  Dart: "#00B4AB",
-  Scala: "#c22d40",
-  Objective_C: "#438eff",
-  Shell: "#89e051",
-  Vue: "#41b883",
-  // Add more languages as needed
-}
-
-// Get a color for any language, with fallbacks for unknown languages
-function getLanguageColor(language: string): string {
-  return languageColors[language] || 
-    // Use hash of language name to generate a consistent color for unknown languages
-    `hsl(${Math.abs(language.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 360}, 65%, 50%)`
-}
+import { getLanguageColor } from "@/lib/language-colors"
 
 export function LanguageChart() {
   const { user } = useAuth()

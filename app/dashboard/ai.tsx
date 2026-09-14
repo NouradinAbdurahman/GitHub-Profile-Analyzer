@@ -83,7 +83,7 @@ export default function AIDashboardPage() {
   // Show loading state or nothing while checking authentication
   if (!mounted || isLoading || !user) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container py-8">
         <div className="flex animate-pulse flex-col gap-4">
           <div className="h-8 w-48 rounded bg-muted"></div>
           <div className="grid gap-6 md:grid-cols-3">
@@ -99,7 +99,7 @@ export default function AIDashboardPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container py-8">
       <h1 className="mb-6 text-3xl font-bold">AI Tools</h1>
 
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">

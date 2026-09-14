@@ -7,6 +7,8 @@ import { Star, GitFork, Eye, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ComparisonButton } from "@/components/comparison-button"
 import { SimpleLoadingSpinner } from "@/components/loading-spinner"
+import { getLanguageColor } from "@/lib/language-colors"
+import { RepoAIInsights } from "@/components/repo-ai-insights"
 
 type Repository = {
   id: number
@@ -104,10 +106,10 @@ export function RepositoriesTab({ username }: { username: string }) {
       ) : (
         <>
           {getDisplayRepos().map((repo: Repository) => (
-            <Card key={repo.id}>
+            <Card key={repo.id} className="transition-colors hover:border-border">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base sm:text-xl">
-                  <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                <CardTitle className="text-base sm:text-xl font-display font-semibold">
+                  <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="hover:text-signal transition-colors">
                     {repo.name}
                   </a>
                 </CardTitle>
@@ -117,7 +119,7 @@ export function RepositoriesTab({ username }: { username: string }) {
                 <div className="flex flex-wrap items-center gap-4 text-[10px] sm:text-xs">
                   {repo.language && (
                     <Badge variant="outline" className="flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full bg-blue-500" />
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: getLanguageColor(repo.language) }} />
                       {repo.language}
                     </Badge>
                   )}
@@ -152,8 +154,9 @@ export function RepositoriesTab({ username }: { username: string }) {
                   </div>
                 )}
 
-                <div className="mt-4 text-xs sm:text-base">
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs sm:text-base">
                   <ComparisonButton repo={repo} />
+                  <RepoAIInsights owner={repo.owner.login} repoName={repo.name} />
                 </div>
               </CardContent>
             </Card>

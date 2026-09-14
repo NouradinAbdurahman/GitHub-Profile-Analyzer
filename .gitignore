@@ -6,6 +6,9 @@
 # testing
 /coverage
 
+# browser automation / MCP debugging artifacts
+/.playwright-mcp
+
 # next.js
 /.next/
 /out/

@@ -10,6 +10,8 @@ import { RepoFilter, type RepoFilters } from "./repo-filter"
 import { ComparisonButton } from "./comparison-button"
 import { useAuth } from "@/components/auth-provider"
 import { AuthReconnect } from "@/components/auth-reconnect"
+import { FadeInCard } from "@/components/fade-in-card"
+import { getLanguageColor } from "@/lib/language-colors"
 
 // Define repository type
 type Repository = {
@@ -495,11 +497,12 @@ export function RepoList({ type = "all" }: { type?: "all" | "public" | "private"
         </Card>
       ) : (
         <>
-          {getDisplayRepos().map((repo) => (
-            <Card key={repo.id}>
+          {getDisplayRepos().map((repo, index) => (
+            <FadeInCard key={repo.id} delay={Math.min(index * 0.05, 0.3)}>
+            <Card className="transition-colors hover:border-border">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">
+                  <CardTitle className="text-xl font-display font-semibold">
                     {repo.name}
                     {repo.private && (
                       <Badge variant="outline" className="ml-2">
@@ -514,7 +517,7 @@ export function RepoList({ type = "all" }: { type?: "all" | "public" | "private"
                 <div className="flex flex-wrap items-center gap-4">
                   {repo.language && (
                     <Badge variant="outline" className="flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full bg-blue-500" />
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: getLanguageColor(repo.language) }} />
                       {repo.language}
                     </Badge>
                   )}
@@ -554,6 +557,7 @@ export function RepoList({ type = "all" }: { type?: "all" | "public" | "private"
                 </div>
               </CardContent>
             </Card>
+            </FadeInCard>
           ))}
 
           {/* Show Load More button if there are more repositories to load */}

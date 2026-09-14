@@ -195,27 +195,27 @@ export function ActivityChart() {
       config={{
         commits: {
           label: "Commits",
-          color: "hsl(var(--chart-1))",
+          color: "var(--chart-1)",
         },
         prs: {
           label: "Pull Requests",
-          color: "hsl(var(--chart-2))",
+          color: "var(--chart-2)",
         },
         issues: {
           label: "Issues",
-          color: "hsl(var(--chart-3))",
+          color: "var(--chart-3)",
         },
       }}
     >
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={activityData} margin={{ top: 5, right: 5, left: 5, bottom: window.innerWidth < 530 ? 30 : 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          <Line type="monotone" dataKey="commits" stroke="var(--color-commits)" strokeWidth={2} />
-          <Line type="monotone" dataKey="prs" stroke="var(--color-prs)" strokeWidth={2} />
-          <Line type="monotone" dataKey="issues" stroke="var(--color-issues)" strokeWidth={2} />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+          <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} fontSize={12} />
+          <YAxis stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} fontSize={12} width={28} />
+          <ChartTooltip content={<ChartTooltipContent />} cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1 }} />
+          <Line type="monotone" dataKey="commits" stroke="var(--color-commits)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+          <Line type="monotone" dataKey="prs" stroke="var(--color-prs)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+          <Line type="monotone" dataKey="issues" stroke="var(--color-issues)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
         </LineChart>
       </ResponsiveContainer>
     </ChartContainer>

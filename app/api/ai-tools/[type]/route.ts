@@ -1,27 +1,15 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod'; // Using Zod for validation
 import { chatStreamWithFallback, chatWithFallback } from '@/lib/openrouter';
+import { githubFetch } from '@/lib/github-server-fetch';
 
 // --- Server-side GitHub Data Fetching Helpers ---
 
-// Helper to create authenticated fetch options
-function getGitHubFetchOptions() {
-  const headers: HeadersInit = {
-    'Accept': 'application/vnd.github.v3+json',
-  };
-  // Use GitHub token if available for higher rate limits
-  if (process.env.GITHUB_TOKEN) {
-    headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
-  }
-  return { headers, cache: 'no-store' as RequestCache }; // Avoid caching GitHub data on the server route
-}
-
 async function getGitHubUserData(username: string): Promise<any> {
-  const url = `https://api.github.com/users/${encodeURIComponent(username)}`;
-  console.log(`Fetching GitHub user data from: ${url}`);
+  console.log(`Fetching GitHub user data for: ${username}`);
 
   try {
-    const response = await fetch(url, getGitHubFetchOptions());
+    const response = await githubFetch(`/users/${encodeURIComponent(username)}`);
 
     if (response.status === 404) {
       console.warn(`GitHub user not found: ${username}`);
@@ -49,11 +37,10 @@ async function getGitHubUserData(username: string): Promise<any> {
 
 async function getGitHubUserRepos(username: string, count: number = 6): Promise<any[]> {
   // Fetch recent repos, sorted by push date, limit count
-  const url = `https://api.github.com/users/${encodeURIComponent(username)}/repos?sort=pushed&per_page=${count}&type=owner`;
-  console.log(`Fetching GitHub repos from: ${url}`);
+  console.log(`Fetching GitHub repos for: ${username}`);
 
   try {
-    const response = await fetch(url, getGitHubFetchOptions());
+    const response = await githubFetch(`/users/${encodeURIComponent(username)}/repos?sort=pushed&per_page=${count}&type=owner`);
 
     if (response.status === 404) {
       // A 404 for repos might just mean the user exists but has 0 repos, which is okay
@@ -124,7 +111,7 @@ async function callAIModel(
 
 // --- Prompt Generation ---
 
-function generatePrompt(type: string, userData: any, reposData: any[]): string {
+function generatePrompt(type: string, userData: any, reposData: any[], role?: string): string {
   // Basic profile info string
   const profileInfo = `
 User: ${userData.login} (${userData.name || 'N/A'})
@@ -174,6 +161,50 @@ ${repoSummary}
 
 Recommendations:`;
 
+    case 'bio-picks':
+      return `
+Based on the following GitHub profile and repository information, do two things:
+1. Rewrite the bio as a concise, professional one-line bio${role ? ` tailored for a ${role} role` : ''} (roughly 160 characters or fewer).
+2. Recommend the 3 best repositories to pin, by name, with a one-sentence reason each based on their description, language, and stars.
+
+Profile Information:
+${profileInfo}
+
+Recent Repositories Summary:
+${repoSummary}
+
+Base every suggestion ONLY on the data given; do not invent details.
+
+Suggestions:`;
+
+    case 'resume-bullets':
+      return `
+Based on the following GitHub profile and repository information, write 4-6 resume-ready bullet points highlighting this person's technical work. Each bullet should start with an action verb and be specific — mention repository names, languages, or measurable stats (stars, forks, followers) where relevant.
+
+Profile Information:
+${profileInfo}
+
+Recent Repositories Summary:
+${repoSummary}
+
+Base every bullet ONLY on the data given; do not invent employers, dates, or outcomes not present in this data.
+
+Resume Bullets:`;
+
+    case 'cover-letter':
+      return `
+Based on the following GitHub profile and repository information, write a short "why you should consider me" blurb (4-6 sentences)${role ? ` for a ${role} position` : ''}, written in first person as if the profile owner is introducing themselves. Ground it in their actual languages, repositories, and activity rather than generic claims.
+
+Profile Information:
+${profileInfo}
+
+Recent Repositories Summary:
+${repoSummary}
+
+Base every claim ONLY on the data given; do not invent work history or credentials not present in this data.
+
+Blurb:`;
+
     default:
       throw new Error(`Invalid AI tool type: ${type}`);
   }
@@ -200,15 +231,16 @@ export async function GET(
   }
 
   // 2. Validate Input Type Manually
-  const allowedTypes = ['summary', 'optimizer', 'recommendations'];
+  const allowedTypes = ['summary', 'optimizer', 'recommendations', 'bio-picks', 'resume-bullets', 'cover-letter'];
   if (!type || !allowedTypes.includes(type)) {
     console.error(`Invalid AI tool type received in URL: '${type}'`);
     return NextResponse.json({ error: `Invalid AI tool type requested. Received: ${type}` }, { status: 400 });
   }
 
-  // 3. Get Username from Query Params
+  // 3. Get Username (and optional target role) from Query Params
   const { searchParams } = new URL(req.url);
   const username = searchParams.get('username');
+  const role = searchParams.get('role')?.trim() || undefined;
   if (!username) {
     return NextResponse.json({ error: 'Username query parameter is required.' }, { status: 400 });
   }
@@ -229,13 +261,17 @@ export async function GET(
     console.log(`[${type}] Fetched GitHub repo data. Count: ${reposData.length}. Time: ${Date.now() - githubRepoStartTime}ms`);
 
     // Generate Prompt
-    const prompt = generatePrompt(type, userData, reposData);
+    const prompt = generatePrompt(type, userData, reposData, role);
     // console.log(`[${type}] Generated Prompt:`, prompt); // Optional: log full prompt
 
     // Set token limit based on type
     let maxTokens;
     if (type === 'summary') {
       maxTokens = 500; // Shorter limit for concise summaries
+    } else if (type === 'bio-picks' || type === 'resume-bullets') {
+      maxTokens = 700;
+    } else if (type === 'cover-letter') {
+      maxTokens = 900;
     } else {
       maxTokens = 1500; // Keep a reasonable limit for longer tools, stream controls actual length
     }

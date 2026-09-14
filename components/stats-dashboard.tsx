@@ -22,20 +22,11 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Star, GitFork } from "lucide-react";
+import { AlertCircle, Star, GitFork, FolderGit2, Users } from "lucide-react";
 import { SimpleLoadingSpinner } from "@/components/loading-spinner";
-
-const COLORS = [
-  "#6366f1", // Indigo
-  "#8b5cf6", // Violet
-  "#d946ef", // Fuchsia
-  "#f43f5e", // Rose
-  "#f97316", // Orange
-  "#eab308", // Amber
-  "#22c55e", // Green
-  "#06b6d4", // Cyan
-  "#3b82f6", // Blue
-];
+import { FadeInCard } from "@/components/fade-in-card";
+import { StatTile } from "@/components/stat-tile";
+import { getLanguageColor } from "@/lib/language-colors";
 
 type GitHubStats = {
   username: string;
@@ -176,47 +167,21 @@ export function StatsDashboard({ username }: { username: string }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-left">
       {/* Stats Cards */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Stars</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center text-center">
-            <div className="flex items-center justify-center">
-              <Star className="mr-2 h-4 w-4 text-yellow-400" />
-              <span className="text-2xl font-bold">{stats.totalStars || 0}</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Forks</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center text-center">
-            <div className="flex items-center justify-center">
-              <GitFork className="mr-2 h-4 w-4 text-blue-400" />
-              <span className="text-2xl font-bold">{stats.totalForks || 0}</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Repositories</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="text-2xl font-bold">{stats.repoCount || 0}</span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Followers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="text-2xl font-bold">{stats.followers || 0}</span>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <FadeInCard delay={0}>
+          <StatTile icon={Star} accent="ember" label="Stars" value={stats.totalStars || 0} />
+        </FadeInCard>
+        <FadeInCard delay={0.05}>
+          <StatTile icon={GitFork} accent="signal" label="Forks" value={stats.totalForks || 0} />
+        </FadeInCard>
+        <FadeInCard delay={0.1}>
+          <StatTile icon={FolderGit2} accent="violet" label="Repositories" value={stats.repoCount || 0} />
+        </FadeInCard>
+        <FadeInCard delay={0.15}>
+          <StatTile icon={Users} accent="teal" label="Followers" value={stats.followers || 0} />
+        </FadeInCard>
       </div>
 
       {/* Top Repositories */}
@@ -238,18 +203,29 @@ export function StatsDashboard({ username }: { username: string }) {
                   bottom: 5,
                 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis type="number" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
                 <YAxis
                   dataKey="name"
                   type="category"
                   width={80}
                   tick={{ fontSize: 10 }}
+                  stroke="hsl(var(--muted-foreground))"
+                  tickLine={false}
+                  axisLine={false}
                 />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="stars" fill="#8884d8" name="Stars" />
-                <Bar dataKey="forks" fill="#82ca9d" name="Forks" />
+                <Tooltip
+                  cursor={{ fill: "hsl(var(--muted))" }}
+                  contentStyle={{
+                    background: "hsl(var(--popover))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "var(--radius)",
+                    fontSize: "0.8rem",
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: "0.8rem" }} />
+                <Bar dataKey="stars" fill="hsl(var(--ember))" name="Stars" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="forks" fill="hsl(var(--signal))" name="Forks" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -269,15 +245,15 @@ export function StatsDashboard({ username }: { username: string }) {
             <div className="px-0">
               <ResponsiveContainer width="100%" height={180}>
                 <RadarChart data={repoQualityData} className="mx-auto">
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8 }} />
-                  <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 8 }} />
+                  <PolarGrid stroke="hsl(var(--border))" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))" }} />
+                  <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))" }} />
                   <Radar
                     name="Quality"
                     dataKey="A"
-                    stroke="#8884d8"
-                    fill="#8884d8"
-                    fillOpacity={0.6}
+                    stroke="hsl(var(--signal))"
+                    fill="hsl(var(--signal))"
+                    fillOpacity={0.35}
                   />
                 </RadarChart>
               </ResponsiveContainer>
@@ -293,11 +269,11 @@ export function StatsDashboard({ username }: { username: string }) {
           <CardContent className="p-2 sm:p-6">
             {stats.languages && stats.languages.length > 0 ? (
               <div className="mb-6 flex flex-wrap gap-2">
-                {stats.languages.map((lang, idx) => (
+                {stats.languages.map((lang) => (
                   <Badge key={lang} className="text-[10px] sm:text-xs" variant="secondary">
                     <div
-                      className="mr-2 h-3 w-3 rounded-full"
-                      style={{ backgroundColor: COLORS[idx % COLORS.length] }}
+                      className="mr-2 h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: getLanguageColor(lang) }}
                     ></div>
                     {lang}
                   </Badge>

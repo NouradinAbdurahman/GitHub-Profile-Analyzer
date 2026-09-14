@@ -14,7 +14,7 @@ export default function FavoritesPage() {
   const router = useRouter()
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container py-8">
       <h1 className="mb-6 text-3xl font-bold">Favorite Profiles</h1>
 
       {favorites.length === 0 ? (

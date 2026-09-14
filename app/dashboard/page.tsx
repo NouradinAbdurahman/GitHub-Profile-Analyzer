@@ -10,8 +10,10 @@ import { RepoList } from "@/components/repo-list"
 import { LanguageTrendsChart } from "@/components/language-trends-chart"
 import { ContributionCalendar } from "@/components/contribution-calendar"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Star } from "lucide-react"
+import { Star, FolderGit2, Users, GitCommitHorizontal } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
+import { StatTile } from "@/components/stat-tile"
+import { getLanguageColor } from "@/lib/language-colors"
 
 type UserStats = {
   repoCount: number;
@@ -248,7 +250,7 @@ export default function DashboardPage() {
   // Show loading state or nothing while checking authentication
   if (!mounted || isLoading || !user) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container py-8">
         <div className="flex animate-pulse flex-col gap-4">
           <div className="h-8 w-48 rounded bg-muted"></div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -264,44 +266,14 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-6 text-3xl font-bold max-[530px]:text-[15px] max-[530px]:mb-2">Dashboard</h1>
+    <div className="container py-8">
+      <h1 className="mb-6 font-display text-2xl sm:text-3xl font-semibold tracking-tight max-[530px]:text-lg max-[530px]:mb-3">Dashboard</h1>
 
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 max-[530px]:gap-1">
-        {statsLoading ? (
-          Array(4)
-            .fill(0)
-            .map((_, i) => (
-              <Card key={i}>
-                <CardContent className="flex h-24 items-center justify-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </CardContent>
-              </Card>
-            ))
-        ) : (
-          <>
-            <StatCard 
-              title="Repositories" 
-              value={userStats?.repoCount.toString() || "0"} 
-              description="Total repositories" 
-            />
-            <StatCard 
-              title="Stars" 
-              value={userStats?.starCount.toString() || "0"} 
-              description="Total stars received" 
-            />
-            <StatCard 
-              title="Followers" 
-              value={userStats?.followers.toString() || "0"} 
-              description="GitHub followers" 
-            />
-            <StatCard 
-              title="Contributions" 
-              value={userStats?.contributions.toString() || "0"} 
-              description="Total contributions" 
-            />
-          </>
-        )}
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatTile icon={FolderGit2} accent="violet" label="Repositories" value={userStats?.repoCount ?? 0} description="Total repositories" loading={statsLoading} />
+        <StatTile icon={Star} accent="ember" label="Stars" value={userStats?.starCount ?? 0} description="Total stars received" loading={statsLoading} />
+        <StatTile icon={Users} accent="teal" label="Followers" value={userStats?.followers ?? 0} description="GitHub followers" loading={statsLoading} />
+        <StatTile icon={GitCommitHorizontal} accent="signal" label="Contributions" value={userStats?.contributions ?? 0} description="Total contributions" loading={statsLoading} />
       </div>
 
       <div className="mt-8">
@@ -355,7 +327,8 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-2">
                       <div className="font-medium max-[530px]:text-[13px]">{repo.name}</div>
                       {repo.language && (
-                        <Badge variant="outline" className="text-xs max-[530px]:text-[10px]">
+                        <Badge variant="outline" className="flex items-center gap-1.5 text-xs max-[530px]:text-[10px]">
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: getLanguageColor(repo.language) }} />
                           {repo.language}
                         </Badge>
                       )}
@@ -416,19 +389,5 @@ export default function DashboardPage() {
         </Tabs>
       </div>
     </div>
-  )
-}
-
-function StatCard({ title, value, description }: { title: string; value: string; description: string }) {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
   )
 }
